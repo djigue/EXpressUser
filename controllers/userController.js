@@ -197,10 +197,10 @@ function traitPanier(req, res) {
     }
   
     const query = `
-      INSERT INTO panier (user_id, produit_id, quantité)
+      INSERT INTO panier (user_id, produit_id, quantite)
       VALUES (?, ?, ?)
       ON CONFLICT(user_id, produit_id) DO UPDATE SET
-        quantité = quantité + excluded.quantité;
+        quantite = quantite + excluded.quantite;
     `;
   
     db.run(query, [user_id, produit_id, quantite || 1], function (err) {
