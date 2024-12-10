@@ -182,7 +182,38 @@ function showProduct(req, res) {
 }
 
 function showPanier (req,res) {
-    res.send(panierView());
+    console.log("bien arrivé sur /panier");
+    const user_id = req.cookies.id; 
+    console.log(req.cookies.id);
+    if (!user_id) {
+        return res.status(401).send("Vous devez être connecté pour accéder à votre panier.");
+    }
+    const query = `SELECT p.nom, p.prix, c.quantite
+                   FROM panier c
+                   JOIN produits p ON c.produit_id = p.id 
+                   WHERE c.user_id = ?; `
+    console.log("Exécution de la requête pour récupérer le panier avec user_id:", user_id)
+    db.all(query, [user_id], (err, rows) => {
+        if (err) {
+            console.error('Erreur lors de la récupération du panier:', err.message);
+            if (!res.headersSent) {
+                return res.status(500).send('Erreur interne du serveur');
+            }
+            return;
+        }
+        console.log("Données reçues du panier :", rows);
+        if (!rows || rows.length === 0) {
+            if (!res.headersSent) {
+                return res.send('<html><body><h1>Aucun produit trouvé.</h1></body></html>');
+            }
+            return;
+        }
+
+        const htmlContent = panierView(rows);
+        if (!res.headersSent) {
+            return res.send(htmlContent);
+        }
+    });
  }
 
 function traitPanier(req, res) {

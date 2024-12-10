@@ -1,43 +1,31 @@
-const db = require('../db/db');
-
-function panierView(req, res) {
-    const user_id = req.cookies.id; 
-
-    const query = `
-        SELECT p.nom, p.prix, c.quantite
-        FROM panier c
-        JOIN produits p ON c.produit_id = p.id 
-        WHERE c.user_id = ?
-    `;
-
-    db.all(query, [user_id], (err, rows) => {
-        if (err) {
-            return res.status(500).send("Erreur lors de la récupération du panier.");
-        }
-
+function panierView(rows) {
+    
         let html = `
             <html>
+                <head><title>Mon Panier</title></head>
                 <body>
-                    <h1>Votre panier</h1>
+                    <h1>Votre Panier</h1>
                     <ul>
         `;
+       
+            rows.forEach(produit => {
+                html += `<li>${produit.nom} - ${produit.prix} € x ${produit.quantite}</li>`;
+            });
 
-        rows.forEach(produit => {
-            html += `<li>${produit.nom} - ${produit.prix} € x ${produit.quantite}</li>`;
-        });
-
-        if (rows.length === 0) {
-            html += `<p>Votre panier est vide.</p>`;
-        }
+            if (rows.length === 0) {
+                html += `<p>Aucun produit trouvé.</p>`;
+            } 
 
         html += `
                     </ul>
                 </body>
             </html>
         `;
-
-        res.send(html); 
-    });
+        
+        console.log("HTML généré :", html);
+        console.log("Envoi de la réponse HTML...");
+        return html; 
+        
 }
 
 module.exports = panierView;
