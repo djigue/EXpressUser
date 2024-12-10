@@ -53,10 +53,10 @@ app.get('/produits', authMiddleware, (req, res) => {
     showProduct (req, res);
 });
 
-app.get('/panier', (req,res) => {
+app.get('/panier', authMiddleware, (req,res) => {
     showPanier (req, res);
 })
-app.post('/panier', (req,res) => {
+app.post('/panier', authMiddleware, (req,res) => {
     traitPanier (req,res);
 })
 
