@@ -6,7 +6,8 @@ const jwt = require('jsonwebtoken');
 const secretKey = 'bon';
 
 const db = require ('./db/db');
-const {getUser, showRegister, traitRegister, showLogin, traitLogin, traitLogout, showDelete, traitDelete, showProduct, showPanier, traitPanier} = require('./controllers/userController');
+const {getUser, showRegister, traitRegister, showLogin, traitLogin, traitLogout, showDelete, traitDelete, showProduct,
+       showPanier, traitPanier,showAnnonce} = require('./controllers/userController');
 const {authMiddleware, admin} = require('./middlewares/authMiddleware');
 
 const port = 3000;
@@ -58,6 +59,10 @@ app.get('/panier', authMiddleware, (req,res) => {
 })
 app.post('/panier', authMiddleware, (req,res) => {
     traitPanier (req,res);
+})
+
+app.get('/annonce', (req,res) => {
+    showAnnonce (req, res);
 })
 
 app.listen(port,()=>{
