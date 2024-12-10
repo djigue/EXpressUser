@@ -11,20 +11,11 @@ const secretKey = 'bon';
 const bcrypt = require('bcrypt');
 
 function getUser(req, res) {
-    const token = req.cookies.token;
+   
     const name = req.cookies.name;
     const id = req.cookies.id;
-
-    if (!token || !name || !id) {
-        return res.status(400).send("Nom, ID ou token manquant.");
-    }
-
-    try {
-        
-        const decoded = jwt.verify(token, secretKey);
-
-        const query = `SELECT * FROM users WHERE id = ? AND username = ?`;
-
+    const query = `SELECT * FROM users WHERE id = ? AND username = ?`;
+    
         db.get(query, [id, name], (err, user) => {
             if (err) {
                 console.error("Erreur lors de la récupération de l'utilisateur :", err.message);
@@ -34,13 +25,11 @@ function getUser(req, res) {
             if (!user) {
                 return res.status(404).send("Utilisateur introuvable.");
             }else {
+                res.setHeader('Content-Type', 'text/html');
                 return res.send(userView(user));
             }
 
         });
-    } catch (err) {
-        return res.status(403).send("Token invalide.");
-    } 
 }
          
 function showRegister (req,res) {

@@ -9,34 +9,37 @@ const db = new sqlite3.Database('../database.sqlite', (err) => {
     }
 }); 
 
-function ajouterProduit(nom, description, prix, quantite) {
+function ajouterProduit(titre, description, prix) {
     const insertQuery = `
-        INSERT INTO produits (nom, description, prix, quantite)
-        VALUES (?, ?, ?, ?)
+        INSERT INTO annonces (titre, description, prix)
+        VALUES (?, ?, ?)
     `;
-    db.run(insertQuery, [nom, description, prix, quantite], function (err) {
+    db.run(insertQuery, [titre, description, prix], function (err) {
         if (err) {
             console.error("Erreur lors de l'ajout du produit :", err.message);
         } else {
-            console.log(`Produit ajouté avec succès (nom : ${nom})`);
+            console.log(`Produit ajouté avec succès (nom : ${titre})`);
         }
     });
 }
 
-// const produits =[
-//     {nom: "Lame du Chaos", description: "paire d'épées assez pratique quand on sait les utiliser", prix: "50000", quantité: "1"},
-//     {nom: "Donuts", description: "petits beignets rond cuit dans l'huile", prix: "2", quantité: "500"},
-//     {nom: "Sèche cheveux", description: "ustesile indispansable pour certaines mise en plis", prix: "49.99", quantité: "100"},
-//     {nom: "Skate", description: "Plance à roulette pour être une terreur dans les rues de ta ville", prix: "99.99", quantité: "100"},
-//     {nom: "Saxophone", description: "Instrument de musique idéal pour le jazz et casser les oreilles de ta famille", prix: "149.99", quantité: "20"},
-//     {nom: "Sucette", description: "Accessoire indispensable pour faire fermer leurs gueules aux bébés", prix: "9.99", quantité: "1000"},
-//     {nom: "Botte secrète", description: "Indispensable pour éviter de passer pour un imbécile surtout quand on est très con", prix: "8.422", quantité: "16132"},
-//     {nom: "Corne d'abondance", description: "Pour manger ce qu'on veut et en quantité énorme dès qu'on en a envie", prix: "999.99", quantité: "3"}
-// ]
+const produits = [
+    { titre: 'Téléphone Samsung Galaxy S21', description: 'Téléphone presque neuf, excellent état, avec chargeur inclus.', prix: 699.99 },
+    { titre: 'Vélo de montagne Rockrider', description: 'Vélo robuste idéal pour les randonnées en montagne, peu utilisé.', prix: 250.00 },
+    { titre: 'Chaise de bureau ergonomique', description: 'Chaise confortable pour le télétravail, réglable en hauteur.', prix: 120.50 },
+    { titre: 'MacBook Pro 2020', description: 'Ordinateur portable Apple en très bon état, parfait pour le travail ou les études.', prix: 1200.00 },
+    { titre: 'Canapé 3 places en cuir', description: 'Canapé en cuir noir, quelques petites éraflures, très confortable.', prix: 450.00 },
+    { titre: 'Cours de guitare', description: 'Donne cours particuliers de guitare pour débutants et intermédiaires.', prix: 25.00 },
+    { titre: 'Appareil photo Canon EOS 250D', description: 'Appareil photo reflex avec objectif 18-55 mm, excellent état.', prix: 550.00 },
+    { titre: 'Lave-vaisselle Bosch', description: 'Lave-vaisselle silencieux et performant, parfait pour une famille.', prix: 300.00 },
+    { titre: 'Jeux de société - Dixit', description: 'Jeu complet avec toutes les cartes en parfait état, idéal pour les soirées entre amis.', prix: 20.00 },
+    { titre: 'Montre connectée Fitbit Charge 5', description: 'Montre neuve, utilisée une seule fois, vendue avec emballage d’origine.', prix: 180.00 }
+];
 
-// produits.forEach((produit) => {
-//     ajouterProduit(produit.nom, produit.description, produit.prix, produit.quantité);
-// })
 
-ajouterProduit("Bâton magique","Outil qui permet de faire ce qu'on veut","10000000","1");
+produits.forEach((produit) => {
+    ajouterProduit(produit.titre, produit.description, produit.prix);
+})
+
+// ajouterProduit("Bâton magique","Outil qui permet de faire ce qu'on veut","10000000","1");
 

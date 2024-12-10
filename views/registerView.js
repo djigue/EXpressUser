@@ -1,7 +1,9 @@
+const headerView = require ('../views/headerView');
+const footerView = require ('../views/footerView');
+
 function registerView() {
-    return `
-    <html>
-        <body>
+    return `${headerView()}
+            <h1>Inscrivez-vous :</h1>
             <form method="post" action="/register">
                 <label for="name">Nom : </label>
                 <input type="text" id="name" name="name">
@@ -11,8 +13,7 @@ function registerView() {
                 <br>
                 <button type="submit">S'enregistrer'</button>
             </form>
-        </body>
-    </html>`;
+            ${footerView()}`;
 }
 
 module.exports = registerView;
