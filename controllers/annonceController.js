@@ -1,6 +1,7 @@
 const annonceView = require ('../views/annonceView');
 const depotView = require ('../views/depotView');
 const depAnnView = require('../views/depAnnView');
+const modifView = require ('../views/modifView');
 const db = require ('../db/db');
 const jwt = require('jsonwebtoken');
 const secretKey = 'bon';
@@ -46,7 +47,7 @@ function showDepAnn(req, res) {
     }
 
     const query = `
-        SELECT a.titre, a.description, a.prix
+        SELECT a.titre, a.description, a.prix, a.id
         FROM depot d
         JOIN annonces a ON d.annonce_id = a.id
         WHERE d.user_id = ?;
@@ -115,6 +116,58 @@ function showDepAnn(req, res) {
        })
     })
  }
+
+ function traitSupp (req, res) {
+    const annonce_id = req.params.id;
+
+    const query = `DELETE FROM annonces WHERE id = ?`;
+    db.run(query, [annonce_id], function (err) {
+        if (err) {
+            console.error("Erreur lors de la suppression de l'annonce:", err.message);
+            return res.status(500).send('Erreur interne du serveur');
+        }
+
+        console.log(`Annonce ${annonce_id} supprimée avec succès.`);
+        return res.redirect('/depot'); 
+    });
+ }
+
+ function traitModif (req, res) {
+    const annonce_id = req.params.id;
+    const { titre, description, prix } = req.body;
+
+    const query = `UPDATE annonces SET titre = ?, description = ?, prix = ? WHERE id = ?`;
+    db.run(query, [titre, description, prix, annonce_id], function (err) {
+        if (err) {
+            console.error("Erreur lors de la mise à jour de l'annonce:", err.message);
+            return res.status(500).send('Erreur interne du serveur');
+        }
+
+        console.log(`Annonce ${annonce_id} mise à jour avec succès.`);
+        return res.redirect('/depot');
+    });
+}
+
+function showModif (req, res) {
+    console.log('params.id', req.params.id);
+    const annonce_id = req.params.id;
+    console.log('annonce_id : ', annonce_id );
+    const query = `SELECT * FROM annonces WHERE id = ?`;
+
+    db.get(query, [annonce_id], (err, row) => {
+        if (err) {
+            console.error("Erreur lors de la récupération de l'annonce:", err.message);
+            return res.status(500).send('Erreur interne du serveur');
+        }
+        console.log('données recup' , row);
+        if (!row) {
+            return res.status(404).send('Annonce non trouvée');
+        }else {
+            return res.send(modifView(row));
+        }
+    });
+}
+ 
  
 
- module.exports = { showAnnonce, showDepot, traitDepot, showDepAnn};
+ module.exports = { showAnnonce, showDepot, traitDepot, showDepAnn, traitSupp, traitModif, showModif};
