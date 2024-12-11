@@ -1,7 +1,7 @@
 const headerView = require ('../views/headerView');
 const footerView = require ('../views/footerView');
 
-function panierView(rows) {
+function panierView() {
     
         let html = `${headerView()}
             

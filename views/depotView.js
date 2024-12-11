@@ -2,9 +2,9 @@ const headerView = require ('../views/headerView');
 const footerView = require ('../views/footerView');
 
 function depotView() {
-    return `${headerView()}
+    let html =`${headerView()}
             <h1>déposer une annonce</h1>
-            <form method="post" action="/depot">
+            <form method="post" id="depotForm">
                 <label for="titre">Titre : </label>
                 <input type="text" id="titre" name="titre">
                 <br>
@@ -16,7 +16,10 @@ function depotView() {
                 <br>
                 <button type="submit">Publier</button>
             </form>
+            <script src="/fetchDepot.js"></script>
             ${footerView()}`;
+
+    return html;
 }
 
 module.exports = depotView;

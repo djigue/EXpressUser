@@ -8,9 +8,9 @@ const secretKey = 'bon';
 const db = require ('./db/db');
 const {traitLogout, showDelete, traitDelete} = require('./controllers/userController');
 const {authMiddleware, admin} = require('./middlewares/authMiddleware');
-const userRouter = require('./route/userRoute');
-const produitRouter = require('./route/produitRoute');
-const annonceRouter = require('./route/annonceRoute');
+const userRouter = require('./routes/userRoute');
+const produitRouter = require('./routes/produitRoute');
+const annonceRouter = require('./routes/annonceRoute');
 
 const port = 3000;
 const app = express();

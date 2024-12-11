@@ -22,4 +22,4 @@ function suppTable(nomTable) {
     });
 }
 
-suppTable('Panier');
+suppTable('depot');

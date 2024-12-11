@@ -7,7 +7,7 @@ function getCookie(id) {
     return null;
 }
 
-document.querySelectorAll('form[id^="panier-"]').forEach(form => {
+document.querySelectorAll('form[id^="depotForm"]').forEach(form => {
     form.addEventListener('submit', function(event) {
         event.preventDefault();
 
@@ -20,7 +20,7 @@ document.querySelectorAll('form[id^="panier-"]').forEach(form => {
         
         if (!user_id) {
             alert("Utilisateur non connecté. Veuillez vous connecter.");
-            window.location.href = '/login';é
+            window.location.href = '/login';
             return;
         }
 
@@ -48,19 +48,12 @@ document.querySelectorAll('form[id^="panier-"]').forEach(form => {
             },
             credentials: 'include'
         })
-        .then(response => {
-            console.log("Statut de la réponse :", response.status);
-            console.log("Type de contenu :", response.headers.get('Content-Type'));
-            return response.text();
-        })
-        .then(text => {
-            console.log("Réponse brute :", text);
-            return JSON.parse(text); 
-        })
+        .then(response => response.json())
         .then(data => {
             console.log("Données reçues :", data);
             if (data.success) {
                 alert('Annonce ajoutée avec succès !');
+                window.location.href = '/depot';
             } else {
                 alert(data.message || 'Une erreur est survenue.');
             }
