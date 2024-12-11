@@ -13,7 +13,7 @@ function showHeader () {
           <li><a href="/user">Acceuil</a></li>
           <li><a href="/produits">Produits</a></li>
           <li><a href="/annonce">Voir les annonces</a></li>
-          <li><a href="/annoncedepot">Déposer une annonce</a></li>
+          <li><a href="/depot">Déposer une annonce</a></li>
           <li><a href="/login">Se connecter</a></li>
           <li><a href="/register">S'inscrire</a></li>
           <li><a href="/panier">Voir le panier</a></li>

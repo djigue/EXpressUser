@@ -6,6 +6,7 @@ const deleteView = require ('../views/deleteView');
 const productView = require ('../views/productView');
 const panierView = require ('../views/panierView');
 const annonceView = require ('../views/annonceView');
+const depotView = require ('../views/depotView');
 const db = require ('../db/db');
 const jwt = require('jsonwebtoken');
 const secretKey = 'bon';
@@ -107,8 +108,7 @@ function traitLogin(req, res) {
         res.cookie('token', token, { httpOnly: true, secure: false, maxAge: 3600000 });
         res.cookie('name', user.username, { secure: false, maxAge: 3600000 });
         res.cookie('id', user.id, { secure: false, maxAge: 3600000 });
-        res.redirect('/produits');
-        // res.send("Connexion réussie !");
+        res.redirect('/user');
     });
   });
 }
@@ -259,5 +259,13 @@ function traitPanier(req, res) {
     });
   }
 
+  function showDepot (req,res) {
+    res.send(depotView());
+ }
+
+ function traitDepot (req, res) {
+    
+ }
+
 module.exports = {getUser, showRegister, traitRegister, showLogin, traitLogin, traitLogout, showDelete, traitDelete, showProduct,
-                  traitPanier, showPanier, showAnnonce};
+                  traitPanier, showPanier, showAnnonce, showDepot};
