@@ -16,7 +16,7 @@ function depotView() {
                 <br>
                 <button type="submit">Publier</button>
             </form>
-            <script src="/fetchDepot.js"></script>
+            <script src="/fetchs/fetchDepot.js"></script>
             ${footerView()}`;
 
     return html;

@@ -26,7 +26,7 @@ function produitView(rows) {
             html += `
             </ul>
             <a href="/panier">Voir le panier</a>
-            <script src="/fetchPanier.js"></script>
+            <script src="/fetchs/fetchPanier.js"></script>
             ${footerView()}`;
 
     return html;
