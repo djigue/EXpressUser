@@ -17,9 +17,9 @@ function suppTable(nomTable) {
         if (err) {
             console.error("Erreur lors de la suppression de la table :", err.message);
         } else {
-            console.log(`Table (nom : ${nomTable}) supprimée avec succès`);
+            console.log(`Table "${nomTable}" supprimée avec succès`);
         }
     });
 }
 
-suppTable('depot');
+suppTable('annonces');

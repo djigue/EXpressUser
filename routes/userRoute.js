@@ -1,6 +1,6 @@
 const express = require('express');
 const router = express.Router();
-const {getUser, showRegister, traitRegister, showLogin, traitLogin}  = require('../controllers/userController');
+const {getUser, showRegister, traitRegister, showLogin, traitLogin, traitLogout}  = require('../controllers/userController');
 const db = require ('../db/db');
 const {authMiddleware} = require('../middlewares/authMiddleware');
     
@@ -22,6 +22,10 @@ router.get ('/login', (req,res) =>{
 
 router.post('/login', (req, res) => {
     traitLogin (req,res);
+});
+
+router.post('/logout', (req, res) => {
+    traitLogout (req,res);
 });
 
 module.exports = router;

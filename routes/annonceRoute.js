@@ -1,8 +1,8 @@
 const express = require('express');
 const router = express.Router();
-const {showAnnonce, showDepot, traitDepot, showDepAnn, showModif, traitModif, traitSupp}  = require('../controllers/annonceController');
 const db = require ('../db/db');
 const {authMiddleware} = require('../middlewares/authMiddleware');
+const {showAnnonce, showDepot, traitDepot, showDepAnn, showModif, traitModif, traitSupp}  = require('../controllers/annonceController');
 
 router.get('/annonce', (req,res) => {
     showAnnonce (req, res);
@@ -17,6 +17,7 @@ router.post('/depot', authMiddleware, (req, res) => {
 })
 
 router.get('/depot', (req, res) => {
+    console.log("Route '/depot' appelée.");
     showDepAnn (req,res);
 })
 
@@ -28,7 +29,7 @@ router.post('/modifier-annonce/:id', authMiddleware, (req, res) => {
     traitModif (req, res);
 })
 
-router.post('/supprimer-annonce/:id', authMiddleware, (req, res) => {
+router.post('/supprimer-annonce-user/:id', authMiddleware, (req, res) => {
     traitSupp (req, res);
 })
 

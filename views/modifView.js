@@ -3,7 +3,7 @@ const footerView = require ('../views/footerView');
 
 function modifView (row) {
     console.log('row reçu : ', row);
-   return`${headerView}
+   return`${headerView()}
        <h1>Modifier l'annonce</h1>
        <form method="POST" action="/modifier-annonce/${row.id}">
            <label for="titre">Titre : </label>

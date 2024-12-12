@@ -6,11 +6,11 @@ const jwt = require('jsonwebtoken');
 const secretKey = 'bon';
 
 const db = require ('./db/db');
-const {traitLogout, showDelete, traitDelete} = require('./controllers/userController');
-const {authMiddleware, admin} = require('./middlewares/authMiddleware');
+const {traitLogout} = require('./controllers/userController');
 const userRouter = require('./routes/userRoute');
 const produitRouter = require('./routes/produitRoute');
 const annonceRouter = require('./routes/annonceRoute');
+const adminRouter = require('./routes/adminRoute');
 
 const port = 3000;
 const app = express();
@@ -22,17 +22,10 @@ app.use(express.static(path.join(__dirname)));
 app.use(userRouter);
 app.use(produitRouter);
 app.use(annonceRouter);
+app.use(adminRouter);
 
 app.post('/logout', (req, res) => {
     traitLogout (req,res);
-});
-
-app.get ('/delete', authMiddleware, admin, (req,res) =>{
-    showDelete (req,res);
-});
-
-app.post('/delete', authMiddleware, admin, (req, res) => {
-    traitDelete (req,res);
 });
 
 app.listen(port,()=>{

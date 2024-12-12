@@ -10,14 +10,24 @@ const db = new sqlite3.Database('../database.sqlite', (err) => {
 }); 
 
 function ajouterTable () {
+//      const query = `CREATE TABLE depot (
+//     user_id INTEGER NOT NULL,
+//     annonce_id INTEGER NOT NULL,
+//     PRIMARY KEY (user_id, annonce_id),
+//     FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE,
+//     FOREIGN KEY (annonce_id) REFERENCES annonces(id) ON DELETE CASCADE
+// );`;
+    
      const query = `CREATE TABLE annonces (
-                     id INTEGER PRIMARY KEY AUTOINCREMENT,
-                     titre TEXT NOT NULL,
-                     description TEXT NOT NULL,
-                     prix REAL NOT NULL,
-                     date_creation DATETIME DEFAULT CURRENT_TIMESTAMP
-                     )`;
-
+  id INTEGER PRIMARY KEY AUTOINCREMENT,
+  titre TEXT NOT NULL,
+  description TEXT NOT NULL,
+  prix REAL NOT NULL,
+  date_creation DATETIME DEFAULT CURRENT_TIMESTAMP,
+  user_id INTEGER,
+  FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE
+);
+`
 
                      db.run(query, function (err) {
                         if (err) {

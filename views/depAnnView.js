@@ -19,7 +19,7 @@ if (rows.length === 0) {
     console.log('id annonce', annonce.id);
     html += `<li>${annonce.titre} - ${annonce.description} - ${annonce.prix} € 
                  <a href="/modifier-annonce/${annonce.id}"><button>Modifier</button></a>
-                 <form method="POST" action="/supprimer-annonce/${annonce.id}" style="display:inline;">
+                 <form method="POST" action="/supprimer-annonce-user/${annonce.id}" style="display:inline;">
                     <button type="submit">Supprimer</button>
                  </form>
              </li>`;

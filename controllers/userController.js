@@ -2,11 +2,11 @@ const User = require ('../models/user');
 const userView = require ('../views/userView');
 const loginView = require ('../views/loginView');
 const registerView = require ('../views/registerView');
-const deleteView = require ('../views/deleteView');
 const db = require ('../db/db');
 const jwt = require('jsonwebtoken');
 const secretKey = 'bon';
 const bcrypt = require('bcrypt');
+
 
 function getUser(req, res) {
    
@@ -104,45 +104,23 @@ function traitLogin(req, res) {
         res.cookie('token', token, { httpOnly: true, secure: false, maxAge: 3600000 });
         res.cookie('name', user.username, { secure: false, maxAge: 3600000 });
         res.cookie('id', user.id, { secure: false, maxAge: 3600000 });
-        res.redirect('/user');
+        
+        if(user.role === 'admin') {
+            res.redirect('/admin');
+        }else {
+            res.redirect('/user');
+        }
+        
     });
   });
 }
 
  function traitLogout(req, res) {
-    res.send("Déconnexion réussie !");
+    
+    res.clearCookie('id');
+    res.clearCookie('name');
+    res.redirect('/login');
         
 }
 
-function showDelete (req,res) {
-    res.send(deleteView());
- }
-
-function traitDelete(req, res) {
-    const {id} = req.body;
-
-    if (!id) {
-        return res.status(400).send("id manquant.");
-    }
-
-    const query = `DELETE FROM users WHERE id= ?`;
-
-    db.run(query, [id], (err) => {
-        if (err) {
-            console.error("Erreur lors de la recherche de l'utilisateur :", err.message);
-            return res.status(500).send("Erreur interne du serveur.");
-        }
-
-        if (this.changes === 0) {
-            return res.status(401).send("Aucun utilisateur avec cet ID.");
-        }else {
-            res.send("Suppession réussie !");
-        }
-    });
-}
-
-
- 
-
-
-module.exports = {getUser, showRegister, traitRegister, showLogin, traitLogin, traitLogout, showDelete, traitDelete};
+module.exports = {getUser, showRegister, traitRegister, showLogin, traitLogin, traitLogout};

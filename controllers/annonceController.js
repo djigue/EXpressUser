@@ -47,13 +47,19 @@ function showDepAnn(req, res) {
     }
 
     const query = `
-        SELECT a.titre, a.description, a.prix, a.id
-        FROM depot d
-        JOIN annonces a ON d.annonce_id = a.id
-        WHERE d.user_id = ?;
+        SELECT a.id, a.titre, a.description, a.prix
+        FROM annoncesval a
+        WHERE a.user_id = ?
+
+        UNION
+
+        SELECT a.id, a.titre, a.description, a.prix
+        FROM annonces a
+        JOIN depot d ON a.id = d.annonce_id
+        WHERE d.user_id = ?
     `;
-    
-    db.all(query, [user_id], (err, rows) => {
+
+    db.all(query, [user_id, user_id], (err, rows) => {
         if (err) {
             console.error("Erreur lors de la récupération des annonces:", err.message);
             return res.status(500).send('Erreur interne du serveur');
@@ -70,51 +76,51 @@ function showDepAnn(req, res) {
     });
 }
 
- function traitDepot (req, res) {
-    console.log('Requête reçue sur /panier');
-    const {titre, description, prix} = req.body;
 
-    console.log('Données reçues :', {titre, description, prix});
+ function traitDepot (req, res) {
+    console.log('Requête reçue sur /depot');
+    const {titre, description, prix} = req.body;
+    const user_id = req.cookies.id;
+
+    console.log('Données reçues :', {titre, description, prix, user_id});
 
     if (!titre || !description || !prix) {
         console.log('Champs manquants');
         return res.status(400).json({ success: false, message: "Tous les champs du formulaires sont obligatoires." });
-    }
-
-    const user_id = req.cookies.id;  
+    }  
 
     if (!user_id) {
         return res.status(401).json({ success: false, message: "Vous devez être connecté pour ajouter une annonce." });
     }
 
     const queryAnnonces = `
-      INSERT INTO annonces (titre, description, prix)
-      VALUES (?, ?, ?)
+      INSERT INTO annoncesval (titre, description, prix, user_id)
+      VALUES (?, ?, ?, ?)
     `;
   
-    db.run(queryAnnonces, [titre, description, prix], function (err) {
+    db.run(queryAnnonces, [titre, description, prix, user_id], function (err) {
       if (err) {
         console.error("Erreur lors de l'ajout de l'annonce :", err.message);
         return res.status(500).json({ message: "Erreur interne du serveur." });
       }
 
-      const annonce_id = this.lastID;
+      //const annonce_id = this.lastID;
 
-      const queryDepot = `
-            INSERT INTO depot (user_id, annonce_id)
-            VALUES (?, ?)
-        `;
+    //   const queryDepot = `
+    //         INSERT INTO depot (user_id, annonce_id)
+    //         VALUES (?, ?)
+    //     `;
 
-       db.run(queryDepot, [user_id, annonce_id], function(err) {
-            if (err) {
-                console.error("Erreur lors de l'ajout de l'entrée dans la table depot :", err.message);
-                return res.status(500).json({ message: "Erreur lors de l'ajout à la table depot." });
-            }
+    //    db.run(queryDepot, [user_id, annonce_id], function(err) {
+    //         if (err) {
+    //             console.error("Erreur lors de l'ajout de l'entrée dans la table depot :", err.message);
+    //             return res.status(500).json({ message: "Erreur lors de l'ajout à la table depot." });
+    //         }
 
-       console.log(`Annonce ajoutée avec succès, et l'utilisateur ${user_id} l'a déposée.`);
-       return res.status(200).json({ success: true, redirectUrl: '/depot' });
-       })
-    })
+    //    console.log(`Annonce ajoutée avec succès, et l'utilisateur ${user_id} l'a déposée.`);
+    //    return res.status(200).json({ success: true, redirectUrl: '/depot' });
+    //    })
+     })
  }
 
  function traitSupp (req, res) {
@@ -132,21 +138,56 @@ function showDepAnn(req, res) {
     });
  }
 
- function traitModif (req, res) {
-    const annonce_id = req.params.id;
-    const { titre, description, prix } = req.body;
+ function traitModif(req, res) {
+    const annonce_id = req.params.id;  
+    const { titre, description, prix } = req.body;  
 
-    const query = `UPDATE annonces SET titre = ?, description = ?, prix = ? WHERE id = ?`;
-    db.run(query, [titre, description, prix, annonce_id], function (err) {
+    if (!annonce_id || !titre || !description || !prix) {
+        return res.status(400).send('Données manquantes');
+    }
+
+    const queryGetUserId = `SELECT user_id FROM annonces WHERE id = ?`;
+    db.get(queryGetUserId, [annonce_id], (err, row) => {
         if (err) {
-            console.error("Erreur lors de la mise à jour de l'annonce:", err.message);
-            return res.status(500).send('Erreur interne du serveur');
+            console.error("Erreur lors de la récupération de user_id :", err.message);
+            return res.status(500).send('Erreur interne du serveur lors de la récupération de user_id.');
         }
 
-        console.log(`Annonce ${annonce_id} mise à jour avec succès.`);
-        return res.redirect('/depot');
+        if (!row) {
+            return res.status(404).send('Annonce non trouvée.');
+        }
+
+        const user_id = row.user_id;  
+
+        const queryInsertAnnonce = `
+            INSERT INTO annoncesval (titre, description, prix, user_id, date_creation)
+            VALUES (?, ?, ?, ?, CURRENT_TIMESTAMP);
+        `;
+        
+        db.run(queryInsertAnnonce, [titre, description, prix, user_id], function (err) {
+            if (err) {
+                console.error("Erreur lors de l'insertion dans annonces:", err.message);
+                return res.status(500).send('Erreur interne du serveur lors de l\'insertion.');
+            }
+
+            const newAnnonceId = this.lastID;  
+
+            
+            const queryDeleteAnnonceVal = `DELETE FROM annonces WHERE id = ?`;
+
+            db.run(queryDeleteAnnonceVal, [annonce_id], function (err) {
+                if (err) {
+                    console.error("Erreur lors de la suppression de l'annonce dans annoncesval:", err.message);
+                    return res.status(500).send('Erreur interne du serveur lors de la suppression.');
+                }
+
+                console.log(`Annonce ${annonce_id} mise à jour et supprimée de annoncesval avec succès.`);
+                return res.redirect('/depot');  // Redirige vers la page de dépôt après la mise à jour
+            });
+        });
     });
 }
+
 
 function showModif (req, res) {
     console.log('params.id', req.params.id);
