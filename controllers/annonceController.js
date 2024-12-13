@@ -46,33 +46,33 @@ function showDepAnn(req, res) {
         return res.status(401).send("Vous devez être connecté pour accéder à cette page.");
     }
 
-    const query = `
+    const queryAnnoncesVal = `
         SELECT a.id, a.titre, a.description, a.prix
         FROM annoncesval a
-        WHERE a.user_id = ?
+        WHERE a.user_id = ?`;
 
-        UNION
-
+    const queryAnnonces = `
         SELECT a.id, a.titre, a.description, a.prix
         FROM annonces a
         JOIN depot d ON a.id = d.annonce_id
         WHERE d.user_id = ?
     `;
 
-    db.all(query, [user_id, user_id], (err, rows) => {
-        if (err) {
+    db.all(queryAnnonces, [user_id], (errAnnonces, annonces) => {
+        if (errAnnonces) {
             console.error("Erreur lors de la récupération des annonces:", err.message);
             return res.status(500).send('Erreur interne du serveur');
         }
 
-        console.log("Données récupérées du dépôt :", rows);
-
-        if (!rows || rows.length === 0) {
-            return res.send('<html><body><h1>Aucune annonce trouvée.</h1></body></html>');
+    db.all(queryAnnoncesVal, [user_id], (errAnnoncesVal, annoncesVal) => {
+        if (errAnnoncesVal) {
+            console.error("Erreur lors de la récupération des annonces:", err.message);
+            return res.status(500).send('Erreur interne du serveur');
         }
 
-        const htmlContent = depAnnView(rows);
+        const htmlContent = depAnnView(annonces, annoncesVal);
         return res.send(htmlContent); 
+    });
     });
 }
 
