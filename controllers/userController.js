@@ -125,7 +125,29 @@ function traitLogin(req, res) {
 }
 
 function showHome (req, res) {
-    res.send (homeView());
+    const query = `SELECT *
+                   FROM annonces; `
+    db.all(query, (err, rows) => {
+        if (err) {
+            console.error('Erreur lors de la récupération du panier:', err.message);
+            if (!res.headersSent) {
+                return res.status(500).send('Erreur interne du serveur');
+            }
+            return;
+        }
+        
+        if (!rows || rows.length === 0) {
+            if (!res.headersSent) {
+                return res.send('<html><body><h1>Aucun produit trouvé.</h1></body></html>');
+            }
+            return;
+        }
+
+        const htmlContent = homeView(rows);
+        if (!res.headersSent) {
+            return res.send(htmlContent);
+        }
+    });
 }
 
 module.exports = {getUser, showRegister, traitRegister, showLogin, traitLogin, traitLogout, showHome};

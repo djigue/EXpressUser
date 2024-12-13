@@ -1,7 +1,7 @@
 const footerView = require ('../views/footerView');
 
-function homeView () {
-    return `<!DOCTYPE html>
+function homeView (rows) {
+    let html = `<!DOCTYPE html>
 <html lang="fr">
   <head>
     <meta charset="UTF-8">
@@ -18,7 +18,23 @@ function homeView () {
     <body>
       <h1>Bienvenue chez Express User</h1>
       <p>BLA BLA BLA</p>
-      ${footerView()}`;
+      <ul>`;
+
+      rows.forEach(annonce => {
+        html += `
+        <li>
+            <strong>${annonce.titre}</strong> - ${annonce.description} - <strong>${annonce.prix} €</strong>
+            
+        </li>`;
+    });
+
+    if (rows.length === 0) {
+        html += `<p>Aucune annonces trouvées.</p>`;
+    }
+
+    html += `</ul>
+             ${footerView()}`;
+    return html;
 }
 
 module.exports = homeView;

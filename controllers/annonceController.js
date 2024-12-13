@@ -38,6 +38,8 @@ function showDepot (req, res) {
 }
 
 function showDepAnn(req, res) {
+    const flash = req.session.flash || {}; 
+    delete req.session.flash; 
     const user_id = req.cookies.id;
 
     if (!user_id) {
@@ -169,7 +171,8 @@ function showDepAnn(req, res) {
                 }
 
                 console.log(`Annonce ${annonce_id} mise à jour et supprimée de annoncesval avec succès.`);
-                return res.redirect('/depot');  // Redirige vers la page de dépôt après la mise à jour
+                req.session.flash = { success: "L'annonce a bien été modifiée elle est en attente de validation." };
+                return res.redirect('/depot');  
             });
         });
     });
