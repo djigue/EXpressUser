@@ -30,6 +30,9 @@ function showDelete (req,res) {
 }
 
 function showAdmin (req, res) {
+    const flash = req.session.flash || {};
+    req.session.flash = {};
+
     db.all('SELECT * FROM users', (err, users) => {
         if (err) {
             console.error('Erreur lors de la récupération des utilisateurs:', err);
@@ -54,7 +57,7 @@ function showAdmin (req, res) {
                 return res.status(500).send('Erreur lors de la récupération des annonces en attente');
             }
 
-        res.send(adminView(users, produits, annonces, annoncesval));
+        res.send(adminView(users, produits, annonces, annoncesval, res.locals.flash));
 
                 });
             });
@@ -101,13 +104,13 @@ function suppUser(req, res) {
                     }
 
                     console.log(`Utilisateur ${userId} et ses annonces supprimés avec succès.`);
+                    req.session.flash = { success: "L'utilisateur a bien été supprimé." };
                     res.redirect('/admin');
                 });
             });
         });
     });
 }
-
 
 function suppProd (req, res) {
     const produitId = req.params.id || req.body.id;
@@ -128,6 +131,7 @@ function suppProd (req, res) {
             return res.status(404).send('Produit non trouvé.');
         }
         console.log('id prod :', produitId)
+        req.session.flash = { success: "Le produit a bien été supprimée." };
         res.redirect('/admin');
     })
 }; 
@@ -151,12 +155,14 @@ function suppAnn (req, res) {
             return res.status(404).send('Annonce non trouvée.');
         }
         console.log(`Annonce supprimée avec succès : ID ${annonceId}`);
+        req.session.flash = { success: "L'annonce a bien été supprimée." };
         res.redirect('/admin');
     })
 };     
 
 function validAnnonce (req, res) {
     const annonceId = req.params.id || req.body.id;
+    console.log('ID de l\'annonce à valider:', annonceId);
 
     if (!annonceId) {
         return res.status(400).send("ID annonce manquant.");
@@ -217,6 +223,7 @@ function validAnnonce (req, res) {
                         }
 
                         console.log(`Annonce ID ${annonceId} validée avec succès.`);
+                        req.session.flash = { success: "L'annonce a bien été validée." };
                         res.redirect("/admin");
                     });
                 });
@@ -224,7 +231,5 @@ function validAnnonce (req, res) {
         });
     });
 }
-
-
 
 module.exports = {showDelete, traitDelete, showAdmin, suppUser, suppProd, suppAnn, validAnnonce};

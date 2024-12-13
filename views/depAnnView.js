@@ -1,27 +1,25 @@
 const headerView = require ('../views/headerView');
 const footerView = require ('../views/footerView');
 
-function depAnnView (annonces, annoncesVal) {
+function depAnnView (annonces, annoncesVal, flash = {}) {
+let html = `${headerView()}`;
 
-    if (!Array.isArray(annonces)) {
-        rows = [];
+    if (flash.success) {
+        html += `<div style="color: green; margin-bottom: 10px;">${flash.success}</div>`;
     }
 
-    if (!Array.isArray(annoncesVal)) {
-        rows = [];
+    if (flash.error) {
+        html += `<div style="color: red; margin-bottom: 10px;">${flash.error}</div>`;
     }
 
-  console.log('row depot : ', annonces);
-  let html = `${headerView()}
-    <h2>Vos annonces</h2>
-<ul>`;
+    html += `<h2>Vos annonces</h2>
+             <ul>`;
 
 if (annonces.length === 0) {
     html += `<p>Vous n'avez publié aucune annonce</p>`;
 } else {
     annonces.forEach(annonce => {
-        console.log('annonce', annonce);
-    console.log('id annonce', annonce.id);
+
     html += `<li>${annonce.titre} - ${annonce.description} - ${annonce.prix} € 
                  <a href="/modifier-annonce/${annonce.id}"><button>Modifier</button></a>
                  <form method="POST" action="/supprimer-annonce-user/${annonce.id}" style="display:inline;">
@@ -29,7 +27,7 @@ if (annonces.length === 0) {
                  </form>
              </li>
               `;
-  });
+        });
 }
 
     html += `</ul>

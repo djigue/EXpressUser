@@ -38,9 +38,7 @@ function showDepot (req, res) {
 }
 
 function showDepAnn(req, res) {
-    console.log("Bien arrivé sur /depot");
     const user_id = req.cookies.id;
-    console.log("user_id:", user_id);
 
     if (!user_id) {
         return res.status(401).send("Vous devez être connecté pour accéder à cette page.");
@@ -70,12 +68,11 @@ function showDepAnn(req, res) {
             return res.status(500).send('Erreur interne du serveur');
         }
 
-        const htmlContent = depAnnView(annonces, annoncesVal);
+        const htmlContent = depAnnView(annonces, annoncesVal, res.locals.flash);
         return res.send(htmlContent); 
     });
     });
 }
-
 
  function traitDepot (req, res) {
     console.log('Requête reçue sur /depot');
@@ -86,11 +83,13 @@ function showDepAnn(req, res) {
 
     if (!titre || !description || !prix) {
         console.log('Champs manquants');
-        return res.status(400).json({ success: false, message: "Tous les champs du formulaires sont obligatoires." });
+        req.session.flash = { error: "Tous les champs du formulaire sont obligatoires." };
+        return res.redirect('/depot');
     }  
 
     if (!user_id) {
-        return res.status(401).json({ success: false, message: "Vous devez être connecté pour ajouter une annonce." });
+        req.session.flash = { error: "Vous devez être connecté pour ajouter une annonce." };
+        return res.redirect('/depot');
     }
 
     const queryAnnonces = `
@@ -101,25 +100,10 @@ function showDepAnn(req, res) {
     db.run(queryAnnonces, [titre, description, prix, user_id], function (err) {
       if (err) {
         console.error("Erreur lors de l'ajout de l'annonce :", err.message);
-        return res.status(500).json({ message: "Erreur interne du serveur." });
+        return res.status(500).json({ success: false, message: "Erreur interne du serveur." });
       }
-
-      //const annonce_id = this.lastID;
-
-    //   const queryDepot = `
-    //         INSERT INTO depot (user_id, annonce_id)
-    //         VALUES (?, ?)
-    //     `;
-
-    //    db.run(queryDepot, [user_id, annonce_id], function(err) {
-    //         if (err) {
-    //             console.error("Erreur lors de l'ajout de l'entrée dans la table depot :", err.message);
-    //             return res.status(500).json({ message: "Erreur lors de l'ajout à la table depot." });
-    //         }
-
-    //    console.log(`Annonce ajoutée avec succès, et l'utilisateur ${user_id} l'a déposée.`);
-    //    return res.status(200).json({ success: true, redirectUrl: '/depot' });
-    //    })
+      console.log("Annonce ajoutée avec succès !");
+      res.status(200).json({ success: true, message: "Annonce ajoutée avec succès." });
      })
  }
 
@@ -130,10 +114,13 @@ function showDepAnn(req, res) {
     db.run(query, [annonce_id], function (err) {
         if (err) {
             console.error("Erreur lors de la suppression de l'annonce:", err.message);
+            req.session.flash = { error: "Erreur lors de la suppression de l'annonce." };
             return res.status(500).send('Erreur interne du serveur');
         }
 
         console.log(`Annonce ${annonce_id} supprimée avec succès.`);
+        console.log('req.session:', req.session); 
+        req.session.flash = { success: "L'annonce a bien été supprimée." };
         return res.redirect('/depot'); 
     });
  }
@@ -187,7 +174,6 @@ function showDepAnn(req, res) {
         });
     });
 }
-
 
 function showModif (req, res) {
     console.log('params.id', req.params.id);

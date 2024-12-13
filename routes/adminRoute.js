@@ -37,11 +37,11 @@ router.post('/supprimer-annonce', authMiddleware, admin, (req, res) => {
 });
 
 router.post('/supprimer-annonce/:id', authMiddleware, admin, (req, res) => {
-    console.log("Route '/supprimer-annonce' appelée.");
     suppAnn (req,res);
 });
 
 router.post('/valider-annonce/:id',authMiddleware, admin, (req, res) => {
+    console.log("en route vers validAnn");
     validAnnonce (req, res);
 })
 

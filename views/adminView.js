@@ -14,10 +14,25 @@ function generateList(items, actionPath, buttonText) {
         </ul>`;
 }
 
-function adminView(users = [], produits = [], annonces = [], annoncesval = []) {
+function adminView(users = [], produits = [], annonces = [], annoncesval = [], flash = {}) {
     let html = `
         ${headerView()}
-        <h1>Bienvenue admin ! <br>Que voulez-vous faire ?</h1>
+
+        <script>
+            window.onload = function() {
+                const flashSuccess = "${flash.success || ''}";
+                const flashError = "${flash.error || ''}";
+
+                if (flashSuccess) {
+                    alert(flashSuccess);  // Afficher un message de succès
+                }
+
+                if (flashError) {
+                    alert(flashError);  // Afficher un message d'erreur
+                }
+            }
+        </script>
+       <h1>Bienvenue admin ! <br>Que voulez-vous faire ?</h1>
         
         <section>
             <h2>Supprimer un utilisateur :</h2>

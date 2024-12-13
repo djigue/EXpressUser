@@ -4,6 +4,8 @@ const cookieParser = require('cookie-parser');
 const path = require('path');
 const jwt = require('jsonwebtoken');
 const secretKey = 'bon';
+const session = require('express-session');
+const flashMiddleware = require('./middlewares/flashMiddleware');
 
 const db = require ('./db/db');
 const {traitLogout} = require('./controllers/userController');
@@ -14,6 +16,13 @@ const adminRouter = require('./routes/adminRoute');
 
 const port = 3000;
 const app = express();
+app.use(session({
+    secret: 'key', 
+    resave: false,
+    saveUninitialized: true,
+    cookie: { secure: false } 
+}));
+app.use(flashMiddleware);
 app.use(express.json());
 app.use(bodyParser.urlencoded({ extended: true }));
 app.use(bodyParser.json());
