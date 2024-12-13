@@ -18,6 +18,9 @@ function showHeader () {
           <li><a href="/login">Se connecter</a></li>
           <li><a href="/register">S'inscrire</a></li>
           <li><a href="/panier">Voir le panier</a></li>
+          <form method="post" action="/logout">
+              <button type="submit">Se déconnecter</button>
+          </form>
         </ul>
       </nav> 
     </header>`;

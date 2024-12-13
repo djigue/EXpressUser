@@ -2,6 +2,7 @@ const User = require ('../models/user');
 const userView = require ('../views/userView');
 const loginView = require ('../views/loginView');
 const registerView = require ('../views/registerView');
+const homeView = require ('../views/homeView');
 const db = require ('../db/db');
 const jwt = require('jsonwebtoken');
 const secretKey = 'bon';
@@ -123,4 +124,8 @@ function traitLogin(req, res) {
         
 }
 
-module.exports = {getUser, showRegister, traitRegister, showLogin, traitLogin, traitLogout};
+function showHome (req, res) {
+    res.send (homeView());
+}
+
+module.exports = {getUser, showRegister, traitRegister, showLogin, traitLogin, traitLogout, showHome};
