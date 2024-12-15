@@ -2,27 +2,20 @@ const headerView = require ('../views/headerView');
 const footerView = require ('../views/footerView');
 
 function depAnnView(annonces, annoncesVal, flash = {}) {
+    console.log(flash)
     let html = `
         ${headerView()}
-
-        <script>
-        window.onload = function() {
-            const flashSuccess = "${flash.success || ''}";
-            const flashError = "${flash.error || ''}";
-
-            if (flashSuccess) {
-                alert(flashSuccess);  // Affiche un message de succès dans une popup
-            }
-
-            if (flashError) {
-                alert(flashError);  // Affiche un message d'erreur dans une popup
-            }
-        }
-        </script>
-
+        <div id="notifications" style="position: fixed; top: 10px; right: 10px; z-index: 1000; max-width: 300px;"></div>
+       <script>
+        const flash = {
+            success: "${flash.success || ''}",
+            error: "${flash.error || ''}"
+        };
+    </script>`;
+ html += `<script src="/scripts/notif.js"></script>
         <h2>Vos annonces</h2>
         <ul>`;
-
+        console.log("Flash transmis au client :", flash);
     if (annonces.length === 0) {
         html += `<p>Vous n'avez publié aucune annonce</p>`;
     } else {
@@ -50,6 +43,7 @@ function depAnnView(annonces, annoncesVal, flash = {}) {
     }
 
     html += `</ul>
+     
             ${footerView()}`;
     return html;
 }

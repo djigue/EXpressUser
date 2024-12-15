@@ -8,6 +8,8 @@ const secretKey = 'bon';
 const bcrypt = require('bcrypt');
 
 function showAnnonce(req, res){
+    const flash = req.session.flash || {}; 
+    delete req.session.flash; 
     const query = `SELECT *
                    FROM annonces; `
     db.all(query, (err, rows) => {
@@ -26,7 +28,7 @@ function showAnnonce(req, res){
             return;
         }
 
-        const htmlContent = annonceView(rows);
+        const htmlContent = annonceView(rows, res.locals.flash);
         if (!res.headersSent) {
             return res.send(htmlContent);
         }
@@ -86,12 +88,12 @@ function showDepAnn(req, res) {
     if (!titre || !description || !prix) {
         console.log('Champs manquants');
         req.session.flash = { error: "Tous les champs du formulaire sont obligatoires." };
-        return res.redirect('/depot');
+        return res.redirect('/depot/formulaire');
     }  
 
     if (!user_id) {
         req.session.flash = { error: "Vous devez être connecté pour ajouter une annonce." };
-        return res.redirect('/depot');
+        return res.redirect('/login');
     }
 
     const queryAnnonces = `
@@ -102,10 +104,12 @@ function showDepAnn(req, res) {
     db.run(queryAnnonces, [titre, description, prix, user_id], function (err) {
       if (err) {
         console.error("Erreur lors de l'ajout de l'annonce :", err.message);
-        return res.status(500).json({ success: false, message: "Erreur interne du serveur." });
+        req.session.flash = { error: "Erreur lors de la suppression de l'annonce." };
+        return res.status(500).send('Erreur interne du serveur');
       }
       console.log("Annonce ajoutée avec succès !");
-      res.status(200).json({ success: true, message: "Annonce ajoutée avec succès." });
+      req.session.flash = { success: "L'annonce a bien été enregistré, elle est en attente de validation." };
+      return res.redirect('/depot');
      })
  }
 
@@ -132,7 +136,9 @@ function showDepAnn(req, res) {
     const { titre, description, prix } = req.body;  
 
     if (!annonce_id || !titre || !description || !prix) {
-        return res.status(400).send('Données manquantes');
+        console.log('Champs manquants');
+        req.session.flash = { error: "Tous les champs du formulaire sont obligatoires." };
+        return res.redirect('/depot/formulaire');
     }
 
     const queryGetUserId = `SELECT user_id FROM annonces WHERE id = ?`;

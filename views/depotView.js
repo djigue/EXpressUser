@@ -4,7 +4,7 @@ const footerView = require ('../views/footerView');
 function depotView() {
     let html =`${headerView()}
             <h1>déposer une annonce</h1>
-            <form method="post" id="depotForm">
+            <form method="post" id="depotForm" action ="/depot">
                 <label for="titre">Titre : </label>
                 <input type="text" id="titre" name="titre">
                 <br>
@@ -16,7 +16,7 @@ function depotView() {
                 <br>
                 <button type="submit">Publier</button>
             </form>
-            <script src="/fetchs/fetchDepot.js"></script>
+            
             ${footerView()}`;
 
     return html;

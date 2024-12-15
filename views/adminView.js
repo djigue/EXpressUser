@@ -17,21 +17,14 @@ function generateList(items, actionPath, buttonText) {
 function adminView(users = [], produits = [], annonces = [], annoncesval = [], flash = {}) {
     let html = `
         ${headerView()}
-
+         <div id="notifications" style="position: fixed; top: 10px; right: 10px; z-index: 1000; max-width: 300px;"></div>
         <script>
-            window.onload = function() {
-                const flashSuccess = "${flash.success || ''}";
-                const flashError = "${flash.error || ''}";
-
-                if (flashSuccess) {
-                    alert(flashSuccess);  // Afficher un message de succès
-                }
-
-                if (flashError) {
-                    alert(flashError);  // Afficher un message d'erreur
-                }
-            }
+             const flash = {
+            success: "${flash.success || ''}",
+            error: "${flash.error || ''}"
+        };
         </script>
+        <script src="/scripts/notif.js"></script>
        <h1>Bienvenue admin ! <br>Que voulez-vous faire ?</h1>
         
         <section>

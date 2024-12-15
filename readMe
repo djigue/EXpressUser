@@ -1,6 +1,8 @@
 A FAIRE : 
-ameliorer l'exp user avec des fetchs et alert
 mdp plus fort
+redirection apres erreur
+suuprimer product
 notification user apres action admin
+remettre table annonces a jour avec user id
 virer les consolelog
 CSS

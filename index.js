@@ -10,7 +10,7 @@ const flashMiddleware = require('./middlewares/flashMiddleware');
 const db = require ('./db/db');
 const {traitLogout} = require('./controllers/userController');
 const userRouter = require('./routes/userRoute');
-const produitRouter = require('./routes/produitRoute');
+const produitRouter = require('./routes/panierRoute');
 const annonceRouter = require('./routes/annonceRoute');
 const adminRouter = require('./routes/adminRoute');
 
@@ -32,6 +32,7 @@ app.use(userRouter);
 app.use(produitRouter);
 app.use(annonceRouter);
 app.use(adminRouter);
+app.use('/scripts', express.static(path.join(__dirname, 'public/scripts')));
 
 app.post('/logout', (req, res) => {
     traitLogout (req,res);
