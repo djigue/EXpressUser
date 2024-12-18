@@ -9,3 +9,6 @@ yarn-error.log*
 # Environnements locaux
 .env
 .DS_Store
+
+# Ignorer le dossier images entier
+/images/
