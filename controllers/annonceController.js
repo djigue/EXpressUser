@@ -10,25 +10,60 @@ const bcrypt = require('bcrypt');
 function showAnnonce(req, res){
     const flash = req.session.flash || {}; 
     delete req.session.flash; 
-    const query = `SELECT *
-                   FROM annonces; `
+    const query = `SELECT 
+                   annonces.id AS annonce_id, 
+                   annonces.titre, 
+                   annonces.description, 
+                   annonces.prix,
+                   images.url AS image_url
+                   FROM 
+                       annonces
+                   LEFT JOIN 
+                       images_annonces ON annonces.id = images_annonces.annonce_id
+                   LEFT JOIN 
+                       images ON images_annonces.image_id = images.id
+                   ORDER BY 
+                       annonces.id;`
     db.all(query, (err, rows) => {
         if (err) {
-            console.error('Erreur lors de la récupération du panier:', err.message);
+            console.error('Erreur lors de la récupération des annonces :', err.message);
             if (!res.headersSent) {
                 return res.status(500).send('Erreur interne du serveur');
             }
             return;
         }
-        console.log("Données reçues du panier :", rows);
-        if (!rows || rows.length === 0) {
+
+        const annonces = rows.reduce((acc, row) => {
+            const { annonce_id, titre, description, prix, image_url } = row;
+    console.log ("annonce id : ", annonce_id," image : ", image_url ) ;
+            if (!acc[annonce_id]) {
+                acc[annonce_id] = {
+                    id: annonce_id,
+                    titre,
+                    description,
+                    prix,
+                    images: [],
+                };
+            }
+    
+            if (image_url) {
+                acc[annonce_id].images.push(image_url);
+            }
+    
+            return acc;
+        }, {});
+    
+        const annoncesArray = Object.values(annonces);
+    
+       
+        if (!annoncesArray || annoncesArray === 0) {
             if (!res.headersSent) {
                 return res.send('<html><body><h1>Aucun produit trouvé.</h1></body></html>');
             }
             return;
         }
-
-        const htmlContent = annonceView(rows, res.locals.flash);
+      
+        const htmlContent = annonceView(annoncesArray, res.locals.flash);
         if (!res.headersSent) {
             return res.send(htmlContent);
         }
@@ -36,7 +71,10 @@ function showAnnonce(req, res){
   }
 
 function showDepot (req, res) {
-    res.send(depotView());
+    const flash = req.session.flash || null; 
+    if (flash) delete req.session.flash; 
+    const htmlContent = depotView(flash); 
+    return res.send(htmlContent);
 }
 
 function showDepAnn(req, res) {
@@ -45,45 +83,116 @@ function showDepAnn(req, res) {
     const user_id = req.cookies.id;
 
     if (!user_id) {
-        return res.status(401).send("Vous devez être connecté pour accéder à cette page.");
+        req.session.flash = { error: "Vous devez être connecté pour accéder à cette page." };
+        return res.redirect('/login');
     }
 
-    const queryAnnoncesVal = `
-        SELECT a.id, a.titre, a.description, a.prix
-        FROM annoncesval a
-        WHERE a.user_id = ?`;
+    const queryAnnoncesval = `
+        SELECT 
+                   annoncesval.id AS annonceval_id, 
+                   annoncesval.titre, 
+                   annoncesval.description, 
+                   annoncesval.prix,
+                   images.url AS image_url
+                   FROM 
+                       annoncesval
+                   LEFT JOIN 
+                       images_annoncesval ON annoncesval.id = images_annoncesval.annonceval_id
+                   LEFT JOIN 
+                       images ON images_annoncesval.image_id = images.id
+                   WHERE
+                       annoncesval.user_id = ?
+                   ORDER BY 
+                       annoncesval.id;`;
 
     const queryAnnonces = `
-        SELECT a.id, a.titre, a.description, a.prix
-        FROM annonces a
-        JOIN depot d ON a.id = d.annonce_id
-        WHERE d.user_id = ?
+                  SELECT 
+                    annonces.id AS annonce_id, 
+                    annonces.titre, 
+                    annonces.description, 
+                    annonces.prix,
+                    images.url AS image_url
+                   FROM 
+                    annonces
+                   LEFT JOIN 
+                    depot ON annonces.id = depot.annonce_id
+                   LEFT JOIN 
+                    images_annonces ON annonces.id = images_annonces.annonce_id
+                   LEFT JOIN 
+                    images ON images_annonces.image_id = images.id
+                   WHERE
+                    depot.user_id = ?
+                   ORDER BY 
+                    annonces.id;
     `;
 
     db.all(queryAnnonces, [user_id], (errAnnonces, annonces) => {
         if (errAnnonces) {
-            console.error("Erreur lors de la récupération des annonces:", err.message);
-            return res.status(500).send('Erreur interne du serveur');
+            console.error("Erreur lors de la récupération des annonces:", errAnnonces.message);
+            req.session.flash = { error: "Erreur interne du serveur." };
+            return res.redirect('/depot');
         }
 
-    db.all(queryAnnoncesVal, [user_id], (errAnnoncesVal, annoncesVal) => {
+        const groupedAnnonces = annonces.reduce((acc, row) => {
+            const { annonce_id, titre, description, prix, image_url } = row;
+    
+            if (!acc[annonce_id]) {
+                acc[annonce_id] = {
+                    id: annonce_id,
+                    titre,
+                    description,
+                    prix,
+                    images: []
+                };
+            }
+    
+            if (image_url) {
+                acc[annonce_id].images.push(image_url);  
+            }
+    
+            return acc;
+        }, {});
+    
+        const annoncesArray = Object.values(groupedAnnonces);
+
+    db.all(queryAnnoncesval, [user_id], (errAnnoncesVal, annoncesval) => {
         if (errAnnoncesVal) {
-            console.error("Erreur lors de la récupération des annonces:", err.message);
-            return res.status(500).send('Erreur interne du serveur');
+            console.error("Erreur lors de la récupération des annonces:", errAnnoncesVal.message);
+            req.session.flash = { error: "Erreur interne du serveur." };
+            return res.redirect('/depot');
         }
+        const groupedAnnoncesval = annoncesval.reduce((acc, row) => {
+            const { annonceval_id, titre, description, prix, image_url } = row;
+    
+            if (!acc[annonceval_id]) {
+                acc[annonceval_id] = {
+                    id: annonceval_id,
+                    titre,
+                    description,
+                    prix,
+                    images: []
+                };
+            }
+    
+            if (image_url) {
+                acc[annonceval_id].images.push(image_url);  
+            }
+    
+            return acc;
+        }, {});
+    
+        
+        const annoncesvalArray = Object.values(groupedAnnoncesval);
 
-        const htmlContent = depAnnView(annonces, annoncesVal, res.locals.flash);
+        const htmlContent = depAnnView(annoncesArray, annoncesvalArray, res.locals.flash);
         return res.send(htmlContent); 
     });
     });
 }
 
  function traitDepot (req, res) {
-    console.log('Requête reçue sur /depot');
-    const {titre, description, prix} = req.body;
+    const {titre, description, prix, imagesUser} = req.body;
     const user_id = req.cookies.id;
-
-    console.log('Données reçues :', {titre, description, prix, user_id});
 
     if (!titre || !description || !prix) {
         console.log('Champs manquants');
@@ -104,13 +213,54 @@ function showDepAnn(req, res) {
     db.run(queryAnnonces, [titre, description, prix, user_id], function (err) {
       if (err) {
         console.error("Erreur lors de l'ajout de l'annonce :", err.message);
-        req.session.flash = { error: "Erreur lors de la suppression de l'annonce." };
-        return res.status(500).send('Erreur interne du serveur');
+        req.session.flash = { error: "Erreur lors de l'ajout de l'annonce." };
+        return res.redirect('/depot/formulaire');
       }
-      console.log("Annonce ajoutée avec succès !");
+      const annoncevalId = this.lastID;
+
+      const images = [];
+      if (req.files) {
+          req.files.forEach(file => {
+              images.push(file.filename);
+          });
+      }
+
+      if (imagesUser) {
+          images.push(imagesUser);
+      }
+
+      if (images.length > 3){
+        req.session.flash = { error: "Vous ne pouvez mettre que 3 images dans votre annonces." };
+        return res.redirect('/depot/formulaire');
+      }
+
+      if (images.length > 0) {
+          const queryImages = 'INSERT INTO images (url) VALUES (?)';
+          const queryImagesAnnVal = `INSERT INTO images_annoncesval (image_id, annonceval_id) VALUES (?, ?)`;
+          
+          images.forEach((imageUrl) => {
+            db.run(queryImages, [imageUrl], function (err) {
+                if (err) {
+                    console.error("Erreur lors de l'ajout de l'image :", err.message);
+                    req.session.flash = { error: "Erreur lors de l'ajout de l'image." };
+                     return res.redirect('/depot/formulaire');
+                }
+
+                const imageId = this.lastID;
+                db.run(queryImagesAnnVal, [imageId, annoncevalId], function (err) {
+                    if (err) {
+                        console.error("Erreur lors de l'association de l'image à l'annonce :", err.message);
+                        req.session.flash = { error: "Erreur lors de l'association de l'image à l'annonce." };
+                        return res.redirect('/depot/formulaire');
+                    }
+                });
+            });
+          });
+        };
+
       req.session.flash = { success: "L'annonce a bien été enregistré, elle est en attente de validation." };
       return res.redirect('/depot');
-     })
+    });
  }
 
  function traitSupp (req, res) {

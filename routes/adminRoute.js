@@ -41,7 +41,6 @@ router.post('/supprimer-annonce/:id', authMiddleware, admin, (req, res) => {
 });
 
 router.post('/valider-annonce/:id',authMiddleware, admin, (req, res) => {
-    console.log("en route vers validAnn");
     validAnnonce (req, res);
 })
 

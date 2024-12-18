@@ -11,14 +11,13 @@ const db = new sqlite3.Database('../database.sqlite', (err) => {
 
 function ajouterTable () {
     
-     const query = `CREATE TABLE panier (
-        user_id INTEGER NOT NULL,
-        annonces_id INTEGER NOT NULL,
-        quantite INTEGER DEFAULT 1,
-        PRIMARY KEY (user_id, annonces_id),
-        FOREIGN KEY (user_id) REFERENCES users (id) ON DELETE CASCADE,
-        FOREIGN KEY (annonces_id) REFERENCES annonces (id) ON DELETE CASCADE
-      )`;
+     const query = `CREATE TABLE images_annoncesval (
+  image_id INTEGER NOT NULL,
+  annonceval_id INTEGER NOT NULL,
+  PRIMARY KEY (image_id, annonceval_id),
+  FOREIGN KEY (image_id) REFERENCES images (id) ON DELETE CASCADE,
+  FOREIGN KEY (annonceval_id) REFERENCES annoncesval (id) ON DELETE CASCADE
+);`;
 
                      db.run(query, function (err) {
                         if (err) {

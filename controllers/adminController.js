@@ -45,19 +45,67 @@ function showAdmin (req, res) {
                 return res.status(500).send('Erreur lors de la récupération des produits');
             }
 
-        db.all('SELECT * FROM annonces', (err, annonces) => {
+            db.all(`
+                SELECT annonces.*, images.url 
+                FROM annonces 
+                LEFT JOIN images_annonces ON annonces.id = images_annonces.annonce_id 
+                LEFT JOIN images ON images.id = images_annonces.image_id
+            `, (err, annoncesWithImages) => {
             if (err) {
                 console.error('Erreur lors de la récupération des annonces:', err);
                 return res.status(500).send('Erreur lors de la récupération des annonces');
             }
+            const annoncesGrouped = annoncesWithImages.reduce((acc, row) => {
+                const annonceId = row.id;
+        
+                if (!acc[annonceId]) {
+                  acc[annonceId] = {
+                    ...row, 
+                    images: [] 
+                  };
+                }
+            
+                if (row.url) {
+                  acc[annonceId].images.push(row.url);
+                }
+            
+                return acc;
+              }, {});
+            
+              const annoncesFinal = Object.values(annoncesGrouped);
 
-        db.all('SELECT * FROM annoncesval', (err, annoncesval) => {
+            const query = `
+            SELECT annoncesval.*, images.url
+            FROM annoncesval
+            LEFT JOIN images_annoncesval ON annoncesval.id = images_annoncesval.annonceval_id
+            LEFT JOIN images ON images.id = images_annoncesval.image_id
+             `;
+
+        db.all(query, (err, annoncesvalWithImages) => {
             if (err) {
                 console.error('Erreur lors de la récupération des annonces en attente:', err);
                 return res.status(500).send('Erreur lors de la récupération des annonces en attente');
             }
 
-        res.send(adminView(users, produits, annonces, annoncesval, res.locals.flash));
+            const annoncesvalGrouped = annoncesvalWithImages.reduce((acc, row) => {
+                const annonceId = row.id;
+            
+                if (!acc[annonceId]) {
+                  acc[annonceId] = {
+                    ...row, 
+                    images: [] 
+                  };
+                }
+            
+                if (row.url) {
+                  acc[annonceId].images.push(row.url);
+                }
+            
+                return acc;
+              }, {});
+            
+              const annoncesvalFinal = Object.values(annoncesvalGrouped);
+        res.send(adminView(users, annoncesFinal, annoncesvalFinal, res.locals.flash));
 
                 });
             });
@@ -162,6 +210,7 @@ function suppAnn (req, res) {
 
 function validAnnonce (req, res) {
     const annonceId = req.params.id || req.body.id;
+
     console.log('ID de l\'annonce à valider:', annonceId);
 
     if (!annonceId) {
@@ -201,35 +250,68 @@ function validAnnonce (req, res) {
 
                 const newAnnonceId = this.lastID;
 
-                const queryInsertDepot = `
-                    INSERT INTO depot (user_id, annonce_id)
-                    VALUES (?, ?);
+                const queryGetImages = `
+                    SELECT url, id FROM images
+                    WHERE id IN (SELECT image_id FROM images_annoncesval WHERE annonceval_id = ?);
                 `;
-
-                db.run(queryInsertDepot, [userId, newAnnonceId], function (err) {
+                db.all(queryGetImages, [annonceId], (err, images) => {
                     if (err) {
-                        console.error("Erreur lors de l'insertion dans depot :", err.message);
+                        console.error("Erreur lors de la récupération des images :", err.message);
                         return res.status(500).send("Erreur lors de la validation de l'annonce.");
                     }
 
-                    const queryDeleteAnnoncesVal = `
-                        DELETE FROM annoncesval WHERE id = ?;
+                    if (!images || images.length === 0) {
+                        console.log("Aucune image trouvée pour cette annonceval.");
+                    } else {
+                    const queryInsertImages = `
+                        INSERT INTO images_annonces (image_id, annonce_id)
+                        VALUES (?, ?);
                     `;
+                    console.log ("annonceId : ", newAnnonceId);
+                   
+                    images.forEach((image) => {
+                        const imageId = image.id; 
+                        console.log ("imageId : ", imageId);
+                        db.run(queryInsertImages, [imageId, newAnnonceId], (err) => {
+                            if (err) {
+                                console.error("Erreur lors de l'insertion dans images_annonces :", err.message);
+                            }
+                        });
+                    });
 
-                    db.run(queryDeleteAnnoncesVal, [annonceId], function (err) {
+                    console.log(`Mise à jour des images réussie pour l'annonce ID: ${newAnnonceId}`);
+                }
+                    const queryInsertDepot = `
+                        INSERT INTO depot (user_id, annonce_id)
+                        VALUES (?, ?);
+                    `;
+                    
+                    db.run(queryInsertDepot, [userId, newAnnonceId], function (err) {
                         if (err) {
-                            console.error("Erreur lors de la suppression de l'annonce dans annoncesval :", err.message);
+                            console.error("Erreur lors de l'insertion dans depot :", err.message);
                             return res.status(500).send("Erreur lors de la validation de l'annonce.");
                         }
 
-                        console.log(`Annonce ID ${annonceId} validée avec succès.`);
-                        req.session.flash = { success: "L'annonce a bien été validée." };
-                        res.redirect("/admin");
+                        const queryDeleteAnnoncesVal = `
+                            DELETE FROM annoncesval WHERE id = ?;
+                        `;
+
+                        db.run(queryDeleteAnnoncesVal, [annonceId], function (err) {
+                            if (err) {
+                                console.error("Erreur lors de la suppression de l'annonce dans annoncesval :", err.message);
+                                return res.status(500).send("Erreur lors de la validation de l'annonce.");
+                            }
+
+                            console.log(`Annonce ID ${annonceId} validée avec succès.`);
+                            req.session.flash = { success: "L'annonce a bien été validée." };
+                            res.redirect("/admin");
+                        });
                     });
                 });
             });
         });
     });
 }
+
 
 module.exports = {showDelete, traitDelete, showAdmin, suppUser, suppProd, suppAnn, validAnnonce};

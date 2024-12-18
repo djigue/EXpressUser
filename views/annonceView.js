@@ -1,7 +1,7 @@
 const headerView = require ('../views/headerView');
 const footerView = require ('../views/footerView');
 
-function AnnonceView(rows, flash) {
+function AnnonceView(annonces, flash) {
     let html = `${headerView()}
                 <h1>Liste des annonces</h1>
                 <div id="notifications" style="position: fixed; top: 10px; right: 10px; z-index: 1000; max-width: 300px;"></div>
@@ -13,11 +13,16 @@ function AnnonceView(rows, flash) {
     </script>
     <script src="/scripts/notif.js"></script>
                 <ul>`;
-
-        rows.forEach(annonce => {
+                console.log("Annonces et images :", annonces);
+        annonces.forEach(annonce => {
             html += `
             <li>
                 <strong>${annonce.titre}</strong> - ${annonce.description} - <strong>${annonce.prix} €</strong>
+                <div class="images-container">
+                ${annonce.images.map(image => `
+                    <img src="/images/${image}" alt="Image de l'annonce ${annonce.titre}" style="max-width: 150px; margin-right: 10px;">
+                `).join('')}
+            </div>
                 <form id="panier-${annonce.id}" action="/panier" method="POST">
                     <input type="hidden" name="annonces_id" value="${annonce.id}" />
                     <label>Quantité :</label>
@@ -27,7 +32,7 @@ function AnnonceView(rows, flash) {
             </li>`;
         });
 
-        if (rows.length === 0) {
+        if (annonces.length === 0) {
             html += `<p>Aucune annonces trouvées.</p>`;
         }
 

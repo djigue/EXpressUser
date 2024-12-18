@@ -20,7 +20,13 @@ function depAnnView(annonces, annoncesVal, flash = {}) {
         html += `<p>Vous n'avez publié aucune annonce</p>`;
     } else {
         annonces.forEach(annonce => {
+            const images = annonce.images || [];
             html += `<li>${annonce.titre} - ${annonce.description} - ${annonce.prix} € 
+            <div class="images-container">
+                ${images.map(image => `
+                    <img src="/images/${image}" alt="Image de l'annonce ${annonce.titre}" style="max-width: 150px; margin-right: 10px;">
+                `).join('')}
+            </div>
                         <a href="/modifier-annonce/${annonce.id}"><button>Modifier</button></a>
                         <form method="POST" action="/supprimer-annonce-user/${annonce.id}" style="display:inline;">
                             <button type="submit">Supprimer</button>
@@ -38,7 +44,14 @@ function depAnnView(annonces, annoncesVal, flash = {}) {
         html += `<p>Vous n'avez aucune annonce en cours de validation</p>`;
     } else {
         annoncesVal.forEach(annonceVal => {
-            html += `<li>${annonceVal.titre} - ${annonceVal.description} - ${annonceVal.prix} € </li>`;
+            const imagesval = annonceVal.images || [];
+            html += `<li>${annonceVal.titre} - ${annonceVal.description} - ${annonceVal.prix} € ;
+            <div class="images-container">
+                ${imagesval.map(imageval => `
+                    <img src="/images/${imageval}" alt="Image de l'annonce ${annonceVal.titre}" style="max-width: 150px; margin-right: 10px;">
+                `).join('')}
+            </div>
+            </li>`
         });
     }
 

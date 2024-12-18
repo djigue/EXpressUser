@@ -1,7 +1,7 @@
 A FAIRE : 
+mettre secret key dans gitignore
 mdp plus fort
 redirection apres erreur
-suuprimer product
 notification user apres action admin
 remettre table annonces a jour avec user id
 virer les consolelog

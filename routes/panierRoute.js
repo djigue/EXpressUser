@@ -4,10 +4,6 @@ const {showProduct, showPanier, traitPanier, panierSupp, panierMoins, panierPlus
 const db = require ('../db/db');
 const {authMiddleware} = require('../middlewares/authMiddleware');
 
-router.get('/produits', authMiddleware, (req, res) => {
-    showProduct (req, res);
-});
-
 router.get('/panier', authMiddleware, (req,res) => {
     showPanier (req, res);
 })

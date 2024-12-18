@@ -5,7 +5,13 @@ function generateList(items, actionPath, buttonText) {
     return `
         <ul>
         ${items.map(item => `
-            <li>${item.id} - ${item.nom || item.titre || item.username || ''}- ${item.description || ''} ${item.date || ''}
+            <li>
+                ${item.id} - ${item.titre} - ${item.description}
+                <div>
+                    ${item.images ? item.images.map(image => `
+                        <img src="/images/${image}" alt="Image de l'annonce" style="max-width: 100px; max-height: 100px;">
+                    `).join('') : 'Aucune image'}
+                </div>
                 <form method="POST" action="${actionPath}/${item.id}" style="display:inline;">
                     <button type="submit">${buttonText}</button>
                 </form>
@@ -14,7 +20,8 @@ function generateList(items, actionPath, buttonText) {
         </ul>`;
 }
 
-function adminView(users = [], produits = [], annonces = [], annoncesval = [], flash = {}) {
+
+function adminView(users = [], annonces = [], annoncesval = [], flash = {}) {
     let html = `
         ${headerView()}
          <div id="notifications" style="position: fixed; top: 10px; right: 10px; z-index: 1000; max-width: 300px;"></div>
@@ -30,20 +37,20 @@ function adminView(users = [], produits = [], annonces = [], annoncesval = [], f
         <section>
             <h2>Supprimer un utilisateur :</h2>
             <form method="post" action="/supprimer-utilisateur">
-                <label for="id">ID utilisateur : </label>
-                <input type="text" id="id" name="id">
+                <label for="user-id">ID utilisateur : </label>
+                <input type="text" id="user-id" name="id">
                 <button type="submit">Supprimer</button>
             </form>
-            ${generateList(users, '/supprimer-utilisateur', 'Supprimer')}
-        </section>
-        <section>
-            <h2>Supprimer un produit :</h2>
-            <form method="post" action="/supprimer-produit">
-                <label for="id">ID produit : </label>
-                <input type="text" id="id" name="id">
-                <button type="submit">Supprimer</button>
-               ${generateList(produits, '/supprimer-produit', 'Supprimer')}
-            </form>
+            <ul>`
+            users.forEach(user => {
+                html += `
+                <li>
+                <strong>${user.id}</strong> - ${user.username}
+            <form id="supp-${user.id}" action="/supprimer-utilisateur/${user.id}" method="POST">
+                    <button type="submit">Supprimer</button>
+                </form> `
+            })
+         html +=   `</ul> 
         </section>
 
         <section>

@@ -33,6 +33,7 @@ app.use(produitRouter);
 app.use(annonceRouter);
 app.use(adminRouter);
 app.use('/scripts', express.static(path.join(__dirname, 'public/scripts')));
+app.use('/images', express.static('images'));
 
 app.post('/logout', (req, res) => {
     traitLogout (req,res);
