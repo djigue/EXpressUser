@@ -1,10 +1,11 @@
 const express = require('express');
 const router = express.Router();
-const {showProduct, showPanier, traitPanier, panierSupp, panierMoins, panierPlus}  = require('../controllers/panierController');
+const {showPanier, traitPanier, panierSupp, panierMoins, panierPlus}  = require('../controllers/panierController');
 const db = require ('../db/db');
 const {authMiddleware} = require('../middlewares/authMiddleware');
 
 router.get('/panier', authMiddleware, (req,res) => {
+    console.log ("en route pour showPanier");
     showPanier (req, res);
 })
 router.post('/panier', authMiddleware, (req,res) => {
@@ -12,7 +13,6 @@ router.post('/panier', authMiddleware, (req,res) => {
 })
 
 router.post('/panier-supprimer/:id', authMiddleware, (req,res) => {
-    console.log('bien arrivé sur panier-sup');
     panierSupp (req,res);
 })
 

@@ -1,8 +1,8 @@
 A FAIRE : 
+retravailler la page admin
 mettre secret key dans gitignore
 mdp plus fort
-redirection apres erreur
+navBar admin
 notification user apres action admin
-remettre table annonces a jour avec user id
 virer les consolelog
 CSS

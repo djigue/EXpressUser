@@ -21,9 +21,9 @@ function generateList(items, actionPath, buttonText) {
 }
 
 
-function adminView(users = [], annonces = [], annoncesval = [], flash = {}) {
+function adminView(users = [], annoncesFinal = [], annoncesvalFinal = [], flash = {}, role) {
     let html = `
-        ${headerView()}
+    ${headerView(role)}
          <div id="notifications" style="position: fixed; top: 10px; right: 10px; z-index: 1000; max-width: 300px;"></div>
         <script>
              const flash = {
@@ -60,12 +60,12 @@ function adminView(users = [], annonces = [], annoncesval = [], flash = {}) {
                 <input type="text" id="id" name="id">
                 <button type="submit">Supprimer</button>
             </form>
-            ${generateList(annonces, '/supprimer-annonce', 'Supprimer')}
+            ${generateList(annoncesFinal, '/supprimer-annonce', 'Supprimer')}
         </section>
 
         <section>
             <h2>Valider une annonce :</h2>
-            ${generateList(annoncesval, '/valider-annonce', 'Valider')}
+            ${generateList(annoncesvalFinal, '/valider-annonce', 'Valider')}
         </section>
         <form method="post" action="/logout">
               <button type="submit">Se déconnecter</button>

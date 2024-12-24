@@ -1,21 +1,16 @@
+const headerView = require ('../views/headerView');
 const footerView = require ('../views/footerView');
 
-function homeView (rows) {
-    let html = `<!DOCTYPE html>
-<html lang="fr">
-  <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Express User</title>
-  </head>
-  <body>
-    <header>
-      <nav>
-        <li><a href="/login">Se connecter</a></li>
-        <li><a href="/register">S'inscrire</a></li>
-      </nav>
-    </header>
-    <body>
+function homeView (rows, flash = {}, role) {
+    let html = `${headerView(role)}
+    <div id="notifications" style="position: fixed; top: 10px; right: 10px; z-index: 1000; max-width: 300px;"></div>
+       <script>
+        const flash = {
+            success: "${flash.success || ''}",
+            error: "${flash.error || ''}"
+        };
+       </script>;
+       <script src="/scripts/notif.js"></script>
       <h1>Bienvenue chez Express User</h1>
       <p>BLA BLA BLA</p>
       <ul>`;

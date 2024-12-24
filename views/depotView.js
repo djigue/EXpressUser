@@ -1,12 +1,10 @@
 const headerView = require ('../views/headerView');
 const footerView = require ('../views/footerView');
 
-function depotView(flash) {
-    const hasFlash = flash && (flash.success || flash.error);
-    let html = `${headerView()}`
-
-    if (hasFlash) {
-        html += `
+function depotView(flash = {}, role) {
+    
+    let html = `${headerView(role)}
+        <div id="notifications" style="position: fixed; top: 10px; right: 10px; z-index: 1000; max-width: 300px;"></div>
         <script>
             const flash = {
                 success: "${flash.success || ''}",
@@ -14,7 +12,7 @@ function depotView(flash) {
             };
         </script>
         <script src="/scripts/notif.js"></script>`;
-    }
+
 
         html +=`    <h1>Déposer une annonce</h1>
             <form action="/depot" method="POST" enctype="multipart/form-data">

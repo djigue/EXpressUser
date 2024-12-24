@@ -1,10 +1,9 @@
 const headerView = require ('../views/headerView');
 const footerView = require ('../views/footerView');
 
-function depAnnView(annonces, annoncesVal, flash = {}) {
-    console.log(flash)
+function depAnnView(annonces, annoncesVal, flash = {}, role) {
     let html = `
-        ${headerView()}
+        ${headerView(role)}
         <div id="notifications" style="position: fixed; top: 10px; right: 10px; z-index: 1000; max-width: 300px;"></div>
        <script>
         const flash = {

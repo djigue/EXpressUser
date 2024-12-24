@@ -8,8 +8,7 @@ const secretKey = 'bon';
 const bcrypt = require('bcrypt');
 
 function showAnnonce(req, res){
-    const flash = req.session.flash || {}; 
-    delete req.session.flash; 
+    const role =req.cookies.role;
     const query = `SELECT 
                    annonces.id AS annonce_id, 
                    annonces.titre, 
@@ -35,7 +34,7 @@ function showAnnonce(req, res){
 
         const annonces = rows.reduce((acc, row) => {
             const { annonce_id, titre, description, prix, image_url } = row;
-    console.log ("annonce id : ", annonce_id," image : ", image_url ) ;
+
             if (!acc[annonce_id]) {
                 acc[annonce_id] = {
                     id: annonce_id,
@@ -56,32 +55,29 @@ function showAnnonce(req, res){
         const annoncesArray = Object.values(annonces);
     
        
-        if (!annoncesArray || annoncesArray === 0) {
+        if (!annoncesArray || annoncesArray.length === 0) {
             if (!res.headersSent) {
                 return res.send('<html><body><h1>Aucun produit trouvé.</h1></body></html>');
             }
             return;
         }
-      
-        const htmlContent = annonceView(annoncesArray, res.locals.flash);
-        if (!res.headersSent) {
-            return res.send(htmlContent);
-        }
+
+        const flash = res.locals.flash || {};
+        const htmlContent = annonceView(annoncesArray, flash, role);   
+        return res.send(htmlContent);
     });
   }
 
-function showDepot (req, res) {
-    const flash = req.session.flash || null; 
-    if (flash) delete req.session.flash; 
-    const htmlContent = depotView(flash); 
+function showDepot (req, res) {  
+    const role =req.cookies.role;
+    const flash = res.locals.flash || {};
+    const htmlContent = depotView(flash, role); 
     return res.send(htmlContent);
 }
 
 function showDepAnn(req, res) {
-    const flash = req.session.flash || {}; 
-    delete req.session.flash; 
     const user_id = req.cookies.id;
-
+    const role =req.cookies.role;
     if (!user_id) {
         req.session.flash = { error: "Vous devez être connecté pour accéder à cette page." };
         return res.redirect('/login');
@@ -183,8 +179,8 @@ function showDepAnn(req, res) {
     
         
         const annoncesvalArray = Object.values(groupedAnnoncesval);
-
-        const htmlContent = depAnnView(annoncesArray, annoncesvalArray, res.locals.flash);
+        const flash = res.locals.flash || {};
+        const htmlContent = depAnnView(annoncesArray, annoncesvalArray, flash, role);
         return res.send(htmlContent); 
     });
     });
@@ -273,87 +269,261 @@ function showDepAnn(req, res) {
             req.session.flash = { error: "Erreur lors de la suppression de l'annonce." };
             return res.status(500).send('Erreur interne du serveur');
         }
-
-        console.log(`Annonce ${annonce_id} supprimée avec succès.`);
-        console.log('req.session:', req.session); 
-        req.session.flash = { success: "L'annonce a bien été supprimée." };
+       
+        req.session.flash = { success : "L'annonce a été supprimée." };
         return res.redirect('/depot'); 
     });
  }
 
  function traitModif(req, res) {
-    const annonce_id = req.params.id;  
-    const { titre, description, prix } = req.body;  
+    const annonce_id = req.params.id;
+    const { titre, description, prix } = req.body;
+    const images = req.files?.map(file => file.filename) || [];
+    console.log("Images téléchargées :", images);
 
-    if (!annonce_id || !titre || !description || !prix) {
-        console.log('Champs manquants');
-        req.session.flash = { error: "Tous les champs du formulaire sont obligatoires." };
-        return res.redirect('/depot/formulaire');
-    }
-
-    const queryGetUserId = `SELECT user_id FROM annonces WHERE id = ?`;
-    db.get(queryGetUserId, [annonce_id], (err, row) => {
+    const queryGetExistImages = `SELECT image_id FROM images_annonces WHERE annonce_id = ?`;
+    db.all(queryGetExistImages, [annonce_id], (err, rows) => {
         if (err) {
-            console.error("Erreur lors de la récupération de user_id :", err.message);
-            return res.status(500).send('Erreur interne du serveur lors de la récupération de user_id.');
+            console.error("Erreur lors de la récupération des images existantes :", err.message);
+            req.session.flash = { error: "Erreur interne du serveur." };
+            return res.redirect(`/modifier-annonce/${annonce_id}`);
         }
 
-        if (!row) {
-            return res.status(404).send('Annonce non trouvée.');
+        const existImages = rows.map(row => row.image_id);
+        console.log("Images existantes :", existImages);
+
+        if (!annonce_id || !titre || !description || !prix) {
+            req.session.flash = { error: "Tous les champs du formulaire sont obligatoires." };
+            return res.redirect(`/modifier-annonce/${annonce_id}`);
         }
 
-        const user_id = row.user_id;  
-
-        const queryInsertAnnonce = `
-            INSERT INTO annoncesval (titre, description, prix, user_id, date_creation)
-            VALUES (?, ?, ?, ?, CURRENT_TIMESTAMP);
-        `;
-        
-        db.run(queryInsertAnnonce, [titre, description, prix, user_id], function (err) {
+        const queryGetUserId = `SELECT user_id FROM annonces WHERE id = ?`;
+        db.get(queryGetUserId, [annonce_id], (err, row) => {
             if (err) {
-                console.error("Erreur lors de l'insertion dans annonces:", err.message);
-                return res.status(500).send('Erreur interne du serveur lors de l\'insertion.');
+                console.error("Erreur lors de la récupération de l'utilisateur :", err.message);
+                req.session.flash = { error: "Erreur interne du serveur." };
+                return res.redirect(`/modifier-annonce/${annonce_id}`);
             }
 
-            const newAnnonceId = this.lastID;  
+            if (!row) {
+                req.session.flash = { error: "Annonce introuvable." };
+                return res.redirect(`/modifier-annonce/${annonce_id}`);
+            }
 
-            
-            const queryDeleteAnnonceVal = `DELETE FROM annonces WHERE id = ?`;
+            const user_id = row.user_id;
 
-            db.run(queryDeleteAnnonceVal, [annonce_id], function (err) {
+            const queryInsertAnnonceVal = `
+                INSERT INTO annoncesval (titre, description, prix, user_id, date_creation)
+                VALUES (?, ?, ?, ?, CURRENT_TIMESTAMP);
+            `;
+            db.run(queryInsertAnnonceVal, [titre, description, prix, user_id], function (err) {
                 if (err) {
-                    console.error("Erreur lors de la suppression de l'annonce dans annoncesval:", err.message);
-                    return res.status(500).send('Erreur interne du serveur lors de la suppression.');
+                    console.error("Erreur lors de l'insertion dans annoncesval :", err.message);
+                    req.session.flash = { error: "Erreur interne du serveur." };
+                    return res.redirect(`/modifier-annonce/${annonce_id}`);
                 }
 
-                console.log(`Annonce ${annonce_id} mise à jour et supprimée de annoncesval avec succès.`);
-                req.session.flash = { success: "L'annonce a bien été modifiée elle est en attente de validation." };
-                return res.redirect('/depot');  
+                const annoncevalId = this.lastID;
+
+                if (images.length > 3) {
+                    req.session.flash = { error: "Vous ne pouvez ajouter que 3 images maximum." };
+                    return res.redirect(`/modifier-annonce/${annonce_id}`);
+                }
+
+                // Fonction pour insérer une image et lier avec l'annonce
+                const insertImageAndLink = (imageUrl, callback) => {
+                    const queryCheckImageExist = `SELECT id FROM images WHERE url = ?`;
+                    db.get(queryCheckImageExist, [imageUrl], (err, row) => {
+                        if (err) {
+                            console.error("Erreur lors de la vérification de l'existence de l'image :", err.message);
+                            callback(err);
+                            return;
+                        }
+
+                        let imageId;
+                        if (row) {
+                            imageId = row.id;  // Si l'image existe déjà, on récupère son ID.
+                            console.log("Image existante :", imageId);
+                            return callback(null, imageId);
+                        } else {
+                            const queryInsertImage = `INSERT INTO images (url) VALUES (?)`;
+                            db.run(queryInsertImage, [imageUrl], function (err) {
+                                if (err) {
+                                    console.error("Erreur lors de l'insertion de l'image :", err.message);
+                                    callback(err);
+                                    return;
+                                }
+                                imageId = this.lastID;  // Si l'image n'existe pas, on l'insère et récupère l'ID.
+                                console.log("Image insérée :", imageId);
+                                return callback(null, imageId);
+                            });
+                        }
+                    });
+                };
+
+                let errors = false;
+
+                // Lier les images existantes
+                existImages.forEach((imageId, index) => {
+                    const queryLinkImage = `
+                        INSERT INTO images_annoncesval (image_id, annonceval_id)
+                        VALUES (?, ?);
+                    `;
+                    db.run(queryLinkImage, [imageId, annoncevalId], (err) => {
+                        if (err) {
+                            console.error("Erreur lors de l'insertion de l'image existante :", err.message);
+                            errors = true;
+                        }
+                        if (index === existImages.length - 1 && !errors) {
+                            processNewImages();
+                        }
+                    });
+                });
+
+                // Lier les nouvelles images téléchargées
+                const processNewImages = () => {
+                    let errors = false;
+                    let remainingImages = images.length;
+                    images.forEach((imageUrl, index) => {
+                        insertImageAndLink(imageUrl, (err, imageId) => {
+                            if (err) {
+                                errors = true;
+                            } else {
+                                const queryLinkImage = `
+                                    INSERT INTO images_annoncesval (image_id, annonceval_id)
+                                    VALUES (?, ?);
+                                `;
+                                db.run(queryLinkImage, [imageId, annoncevalId], (err) => {
+                                    if (err) {
+                                        console.error("Erreur lors de l'insertion de l'image liée :", err.message);
+                                        errors = true;
+                                    }
+                                    remainingImages--;
+                                    if (remainingImages === 0) {
+                                        finalizeModification(errors);
+                                    }
+                                });
+                            }
+                        });
+                    });
+                };
+
+                const finalizeModification = (errors) => {
+                    if (errors) {
+                        req.session.flash = { error: "Erreur lors de la gestion des images." };
+                        return res.redirect(`/modifier-annonce/${annonce_id}`);
+                    }
+
+                    const queryDeleteAnnonce = `DELETE FROM annonces WHERE id = ?`;
+                    db.run(queryDeleteAnnonce, [annonce_id], function (err) {
+                        if (err) {
+                            console.error("Erreur lors de la suppression de l'annonce :", err.message);
+                            req.session.flash = { error: "Erreur interne du serveur." };
+                            return res.redirect(`/modifier-annonce/${annonce_id}`);
+                        }
+
+                        req.session.flash = { success: "Annonce modifiée avec succès et en attente de validation." };
+                        if (!res.headersSent) {
+                            res.redirect('/depot');
+                        }
+                    });
+                };
+
+                // Si il y a des images téléchargées, on commence par les traiter
+                if (images.length > 0) {
+                    processNewImages();
+                } else {
+                    finalizeModification(false);
+                }
             });
         });
     });
 }
 
 function showModif (req, res) {
-    console.log('params.id', req.params.id);
+    const role =req.cookies.role;
     const annonce_id = req.params.id;
-    console.log('annonce_id : ', annonce_id );
-    const query = `SELECT * FROM annonces WHERE id = ?`;
-
-    db.get(query, [annonce_id], (err, row) => {
+    const queryAnnonce = `SELECT * FROM annonces WHERE id = ?`;
+    const queryImages = `SELECT i.id, i.url 
+                         FROM images i
+                         INNER JOIN images_annonces ia ON i.id = ia.image_id
+                         WHERE ia.annonce_id = ?`;
+    
+    db.get(queryAnnonce, [annonce_id], (err, annonce) => {
         if (err) {
             console.error("Erreur lors de la récupération de l'annonce:", err.message);
+            req.session.flash = { error: "Erreur interne du serveur" };
+            return res.redirect ('/depot');
+        }
+        
+        if (!annonce) {
+            req.session.flash = { error: "Annonce non trouvée" };
+            return res.redirect ('/depot');
+        };
+        
+    
+    db.all(queryImages, [annonce_id], (err, images) => {
+        if (err) {
+            console.error("Erreur lors de la récupération des images:", err.message);
+            req.session.flash = { error: "Erreur interne du serveur" };
+            return res.redirect ('/depot');
+        }       
+            const flash = res.locals.flash || {};
+            return res.send(modifView(annonce, images, flash, role));
+       
+        }); 
+    });  
+}
+
+function suppImage (req, res) {
+    const image_id = req.params.id;
+    console.log("requete : ", req.params);
+
+    const queryAnnonceId = `
+        SELECT ia.annonce_id 
+        FROM images_annonces ia 
+        WHERE ia.image_id = ?
+    `;
+
+    db.get(queryAnnonceId, [image_id], (err, row) => {
+        if (err) {
+            console.error("Erreur lors de la récupération de l'annonce associée:", err.message);
+            req.session.flash = { error: "Erreur interne du serveur." };
+            return res.status(500).send("Erreur interne du serveur.");
+        }
+
+        if (!row) {
+            req.session.flash = { error: "Annonce associée non trouvée." };
+            return res.redirect('/depot');
+        }
+
+        const annonce_id = row.annonce_id;
+
+        const querySuppRel = `
+            DELETE FROM images_annonces WHERE image_id = ?;
+        `;
+        db.run(querySuppRel, [image_id], function (err) {
+            if (err) {
+                console.error("Erreur lors de la suppression de la relation image-annonce:", err.message);
+                req.session.flash = { error: "Erreur interne du serveur." };
+                return res.status(500).send("Erreur interne du serveur.");
+            }
+
+        const querySuppImage = `DELETE FROM images WHERE id = ?`;
+        db.run(querySuppImage, [image_id], function (err) {
+        if (err) {
+            console.error("Erreur lors de la suppression de l'image:", err.message);
+            req.session.flash = { error: "Erreur lors de la suppression de l'image." };
             return res.status(500).send('Erreur interne du serveur');
         }
-        console.log('données recup' , row);
-        if (!row) {
-            return res.status(404).send('Annonce non trouvée');
-        }else {
-            return res.send(modifView(row));
-        }
+       
+        req.session.flash = { success : "L'image a été supprimée." };
+        return res.redirect(`/modifier-annonce/${annonce_id}`); 
     });
+  });
+ });
 }
  
  
 
- module.exports = { showAnnonce, showDepot, traitDepot, showDepAnn, traitSupp, traitModif, showModif};
+ module.exports = { showAnnonce, showDepot, traitDepot, showDepAnn, traitSupp, traitModif, showModif, suppImage};

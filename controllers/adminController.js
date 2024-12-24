@@ -3,6 +3,7 @@ const deleteView = require ('../views/deleteView');
 const adminView = require('../views/adminView');
 
 function showDelete (req,res) {
+    
     res.send(deleteView());
  }
 
@@ -30,20 +31,12 @@ function showDelete (req,res) {
 }
 
 function showAdmin (req, res) {
-    const flash = req.session.flash || {};
-    req.session.flash = {};
-
+    const role =req.cookies.role;
     db.all('SELECT * FROM users', (err, users) => {
         if (err) {
             console.error('Erreur lors de la récupération des utilisateurs:', err);
             return res.status(500).send('Erreur lors de la récupération des utilisateurs');
         }
-
-        db.all('SELECT * FROM produits', (err, produits) => {
-            if (err) {
-                console.error('Erreur lors de la récupération des produits:', err);
-                return res.status(500).send('Erreur lors de la récupération des produits');
-            }
 
             db.all(`
                 SELECT annonces.*, images.url 
@@ -105,12 +98,12 @@ function showAdmin (req, res) {
               }, {});
             
               const annoncesvalFinal = Object.values(annoncesvalGrouped);
-        res.send(adminView(users, annoncesFinal, annoncesvalFinal, res.locals.flash));
+              const flash = res.locals.flash || {};
+        res.send(adminView(users, annoncesFinal, annoncesvalFinal, flash, role));
 
                 });
             });
-        });
-    }); 
+        }); 
 }
 
 function suppUser(req, res) {

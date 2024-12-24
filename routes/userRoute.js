@@ -1,8 +1,12 @@
 const express = require('express');
 const router = express.Router();
-const {getUser, showRegister, traitRegister, showLogin, traitLogin, traitLogout, showHome}  = require('../controllers/userController');
+const path = require('path');
 const db = require ('../db/db');
+
 const {authMiddleware} = require('../middlewares/authMiddleware');
+const {getUser, showRegister, traitRegister, showLogin, traitLogin, traitLogout, showHome}  = require('../controllers/userController');
+
+
 
 router.get ('/home', (req, res) => {
     showHome (req, res);

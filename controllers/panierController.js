@@ -1,49 +1,22 @@
-const productView = require ('../views/productView');
 const panierView = require ('../views/panierView');
 const db = require ('../db/db');
 const jwt = require('jsonwebtoken');
 const secretKey = 'bon';
 const bcrypt = require('bcrypt');
 
-function showProduct(req, res) {
-    const query = 'SELECT * FROM produits'; 
-
-    db.all(query, [], (err, rows) => {
-        if (err) {
-            console.error('Erreur lors de la récupération des produits:', err.message);
-            if (!res.headersSent) {
-                return res.status(500).send('Erreur interne du serveur');
-            }
-            return;
-        }
-
-        if (!rows || rows.length === 0) {
-            if (!res.headersSent) {
-                return res.send('<html><body><h1>Aucun produit trouvé.</h1></body></html>');
-            }
-            return;
-        }
-
-        const htmlContent = productView(rows);
-        if (!res.headersSent) {
-            return res.send(htmlContent);
-        }
-    });
-}
-
 function showPanier (req,res) {
-    const flash = req.session.flash || {};
-    delete req.session.flash;
-    console.log("bien arrivé sur /panier");
+    console.log("Panier avant affichage:", req.session.panier);
     const user_id = req.cookies.id; 
+    const role =req.cookies.role;
+
     if (!user_id) {
-        return res.status(401).send("Vous devez être connecté pour accéder à votre panier.");
+        req.session.flash = { error: "Vous devez être connecté pour accéder à votre panier." };
+        return res.redirect('/login')
     }
     const query = `SELECT a.id, a.titre, a.prix, a.description, p.quantite
                    FROM panier p
                    JOIN annonces a ON p.annonces_id = a.id
                    WHERE p.user_id = ?; `
-    console.log("Exécution de la requête pour récupérer le panier avec user_id:", user_id);
 
     const totalQuery = `
         SELECT SUM(p.prix * c.quantite) AS total_panier
@@ -55,40 +28,45 @@ function showPanier (req,res) {
     db.all(query, [user_id], (err, rows) => {
         if (err) {
             console.error('Erreur lors de la récupération du panier:', err.message);
-            return res.status(500).send('Erreur interne du serveur');
+            req.session.flash = { error: "Erreur lors de la récupération du panier." };
+            return res.redirect('/annonce')
         }
 
             db.get(totalQuery, [user_id], (err, totalRow) => {
                 if (err) {
                     console.error("Erreur lors du calcul du total :", err.message);
-                    return res.status(500).send("Erreur interne du serveur");
+                    req.session.flash = { error: "Erreur lors du clalcul du total." };
+                    return res.redirect('/panier')
                 }
 
             const totalPanier = totalRow?.total_panier || 0;
     
-                console.log("Total général du panier :", totalPanier);
-    
-        if (!rows || rows.length === 0) {    
-            req.session.flash = { error: "Aucune annonce trouvée" };
-            return res.redirect('/annonce')
-        }
-
-        const htmlContent = panierView(rows, totalPanier, res.locals.flash);
+        // if (!rows || rows.length === 0) {    
+        //     req.session.flash = { error: "Vous n'avez aucune annonce dans votre panier" };
+        //     return res.redirect('/annonce')
+        // }
+        console.log("rows dans panierView:", rows);
+        const flash = res.locals.flash || {};
+        const htmlContent = panierView(rows, totalPanier, flash, role);
          return res.send(htmlContent);
       });
     });
  }
 
 function traitPanier(req, res) {
-    console.log('Requête reçue sur /panier');
     const {annonces_id, quantite } = req.body;
     const user_id = req.cookies.id; 
-
-    console.log('Données reçues :', { user_id, annonces_id, quantite }); 
   
-    if (!user_id || !annonces_id) {
-        console.log('ID utilisateur ou ID annonce manquant');
-        return res.status(400).json({ success: false, message: "L'ID utilisateur et l'ID annonce sont obligatoires." });
+    if (!user_id) {
+        console.log('ID utilisateur manquant');
+        req.session.flash = { error: "ID utilisateur manquant." };
+        return res.redirect('/login')
+    }
+
+    if (!annonces_id) {
+        console.log('ID annonce manquant');
+        req.session.flash = { error: "ID annonce manquant." };
+        return res.redirect('/annonce')
     }
   
     const query = `
@@ -101,27 +79,31 @@ function traitPanier(req, res) {
     db.run(query, [user_id, annonces_id, quantite || 1], function (err) {
       if (err) {
         console.error("Erreur lors de l'ajout au panier :", err.message);
-        return res.status(500).json({ message: "Erreur interne du serveur." });
+        req.session.flash = { error: "Erreur lors de l'ajout au panier." };
+        return res.redirect('/annonce')
       }
       req.session.flash = { success: "L'annonce a bien été ajoutée au panier." };
+      
       return res.redirect('/annonce'); 
     });
   }
 
   function panierSupp(req, res) {
-    console.log("Entrée dans panierSupp");
-    const annonce_id = req.params.id; // ID de l'annonce à supprimer
-    const user_id = req.cookies.id;  // Assurez-vous que l'ID de l'utilisateur est bien dans les cookies
-    console.log("user_id:", user_id);
-    // Vérifier que l'ID de l'utilisateur et l'ID de l'annonce existent
-    if (!user_id || !annonce_id) {
-        req.session.flash = { error: "L'utilisateur ou l'annonce est introuvable." };
-        return res.redirect('/panier');
+    const annonce_id = req.params.id; 
+    const user_id = req.cookies.id;  
+   
+    if (!user_id) {
+        req.session.flash = { error: "Id utilisateur manquant" };
+        return res.redirect('/login');
+    }
+
+    if (!annonce_id) {
+        console.log('ID annonce manquant');
+        req.session.flash = { error: "ID annonce manquant." };
+        return res.redirect('/panier')
     }
 
     const query = `DELETE FROM panier WHERE user_id = ? AND annonces_id = ?`;
-    console.log("Exécution de la requête DELETE avec user_id:", user_id, "et annonce_id:", annonce_id);
-    // Exécution de la requête de suppression dans la base de données
     db.run(query, [user_id, annonce_id], function (err) {
         if (err) {
             console.error("Erreur lors de la suppression de l'annonce:", err.message);
@@ -129,12 +111,11 @@ function traitPanier(req, res) {
             return res.redirect('/panier');
         }
 
-        if (this.changes === 0) {  // Si aucune ligne n'a été supprimée
+        if (this.changes === 0) { 
             req.session.flash = { error: "L'annonce n'a pas été trouvée dans votre panier." };
             return res.redirect('/panier');
         }
 
-        console.log(`Annonce ${annonce_id} supprimée du panier avec succès.`);
         req.session.flash = { success: "L'annonce a été supprimée du panier." };
         return res.redirect('/panier'); 
     });
@@ -144,15 +125,19 @@ function panierMoins(req, res) {
     const annonce_id = req.params.id;
     const user_id = req.cookies.id;
 
-    // Assurez-vous que l'ID de l'utilisateur et l'ID de l'annonce existent
-    if (!user_id || !annonce_id) {
-        req.session.flash = { error: "L'utilisateur ou l'annonce est introuvable." };
-        return res.redirect('/panier');
+    
+    if (!user_id) {
+        req.session.flash = { error: "Id utilisateur manquant." };
+        return res.redirect('/login');
     }
 
-    // Requête pour diminuer la quantité de 1 dans le panier
-    const query = `UPDATE panier SET quantite = quantite - 1 WHERE user_id = ? AND annonces_id = ? AND quantite > 1`;
+    if (!annonce_id) {
+        console.log('ID annonce manquant');
+        req.session.flash = { error: "ID annonce manquant." };
+        return res.redirect('/panier')
+    }
 
+    const query = `UPDATE panier SET quantite = quantite - 1 WHERE user_id = ? AND annonces_id = ? AND quantite > 1`;
     db.run(query, [user_id, annonce_id], function(err) {
         if (err) {
             console.error("Erreur lors de la mise à jour de la quantité:", err.message);
@@ -174,15 +159,19 @@ function panierPlus(req, res) {
     const annonce_id = req.params.id;
     const user_id = req.cookies.id;
 
-    // Assurez-vous que l'ID de l'utilisateur et l'ID de l'annonce existent
-    if (!user_id || !annonce_id) {
-        req.session.flash = { error: "L'utilisateur ou l'annonce est introuvable." };
-        return res.redirect('/panier');
+    
+    if (!user_id) {
+        req.session.flash = { error: "Id utilisateur manquant." };
+        return res.redirect('/login');
     }
 
-    // Requête pour diminuer la quantité de 1 dans le panier
-    const query = `UPDATE panier SET quantite = quantite + 1 WHERE user_id = ? AND annonces_id = ?`;
+    if (!annonce_id) {
+        console.log('ID annonce manquant');
+        req.session.flash = { error: "ID annonce manquant." };
+        return res.redirect('/panier')
+    }
 
+    const query = `UPDATE panier SET quantite = quantite + 1 WHERE user_id = ? AND annonces_id = ?`;
     db.run(query, [user_id, annonce_id], function(err) {
         if (err) {
             console.error("Erreur lors de la mise à jour de la quantité:", err.message);
@@ -200,4 +189,4 @@ function panierPlus(req, res) {
     });
 }
 
-  module.exports = {showProduct, showPanier, traitPanier, panierSupp, panierMoins, panierPlus}
+  module.exports = {showPanier, traitPanier, panierSupp, panierMoins, panierPlus}

@@ -19,22 +19,6 @@ const db = new sqlite3.Database('./database.sqlite', (err) => {
             }
         });
 
-        db.run(`
-            CREATE TABLE IF NOT EXISTS produits (
-                id INTEGER PRIMARY KEY AUTOINCREMENT,
-                nom TEXT NOT NULL,
-                description TEXT,
-                prix REAL NOT NULL,
-                quantite INTEGER NOT NULL
-            )
-        `, (err) => {
-            if (err) {
-                console.error("Erreur lors de la création de la table produits :", err.message);
-            } else {
-                console.log("Table 'produits' présente.");
-            }
-        });
-
         console.log("Connecté à la base de données.");
     }
 });

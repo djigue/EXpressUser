@@ -8,7 +8,7 @@ const session = require('express-session');
 const flashMiddleware = require('./middlewares/flashMiddleware');
 
 const db = require ('./db/db');
-const {traitLogout} = require('./controllers/userController');
+const traitLogout = require('./controllers/userController');
 const userRouter = require('./routes/userRoute');
 const produitRouter = require('./routes/panierRoute');
 const annonceRouter = require('./routes/annonceRoute');
@@ -22,6 +22,11 @@ app.use(session({
     saveUninitialized: true,
     cookie: { secure: false } 
 }));
+app.use((req, res, next) => {
+    res.set('Cache-Control', 'no-store');
+    next();
+});
+app.use(cookieParser());
 app.use(flashMiddleware);
 app.use(express.json());
 app.use(bodyParser.urlencoded({ extended: true }));
@@ -40,5 +45,5 @@ app.post('/logout', (req, res) => {
 });
 
 app.listen(port,()=>{
-    console.log('Coucou');
+    console.log('Serveur en écoute sur le port 3000');
 })

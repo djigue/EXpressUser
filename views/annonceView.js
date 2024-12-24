@@ -1,8 +1,8 @@
 const headerView = require ('../views/headerView');
 const footerView = require ('../views/footerView');
 
-function AnnonceView(annonces, flash) {
-    let html = `${headerView()}
+function AnnonceView(annonces, flash = {}, role) {
+    let html = `${headerView(role)}
                 <h1>Liste des annonces</h1>
                 <div id="notifications" style="position: fixed; top: 10px; right: 10px; z-index: 1000; max-width: 300px;"></div>
        <script>
@@ -13,7 +13,6 @@ function AnnonceView(annonces, flash) {
     </script>
     <script src="/scripts/notif.js"></script>
                 <ul>`;
-                console.log("Annonces et images :", annonces);
         annonces.forEach(annonce => {
             html += `
             <li>
