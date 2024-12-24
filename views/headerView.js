@@ -23,6 +23,9 @@ function showHeader (role) {
           };
           if (role === 'admin') {
   html += `<li><a href="/admin">Page Admin</a></li>
+           <li><a href="/admin/user">Supprimer un utilisateur</a></li>
+           <li><a href="/admin/annonce">Supprimer une annonce</a></li>
+           <li><a href="/admin/annonceval">Valider une annonce</a></li>
           `};
           if (role === 'admin' || role === 'user') {
   html +=`<form method="post" action="/logout">

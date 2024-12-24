@@ -1,11 +1,23 @@
 const express = require('express');
 const router = express.Router();
 const db = require ('../db/db');
-const {showAdmin, showDelete, suppUser, validAnnonce, suppAnn, suppProd} = require('../controllers/adminController');
+const {showAdmin, showAdminUser, showAdminAnnonce, showAdminAnnonceval, showDelete, suppUser, validAnnonce, suppAnn, suppProd} = require('../controllers/adminController');
 const {authMiddleware, admin} = require('../middlewares/authMiddleware');
 
 router.get ('/delete', authMiddleware, admin, (req,res) =>{
     showDelete (req,res);
+});
+
+router.get ('/admin/user', authMiddleware, admin, (req,res) =>{
+    showAdminUser (req,res);
+});
+
+router.get ('/admin/annonce', authMiddleware, admin, (req,res) =>{
+    showAdminAnnonce (req,res);
+});
+
+router.get ('/admin/annonceval', authMiddleware, admin, (req,res) =>{
+    showAdminAnnonceval (req,res);
 });
 
 router.post('/delete', authMiddleware, admin, (req, res) => {

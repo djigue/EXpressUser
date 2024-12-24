@@ -1,36 +1,91 @@
 const db = require ('../db/db');
 const deleteView = require ('../views/deleteView');
 const adminView = require('../views/adminView');
+const adminUserView =require('../views/adminUserView');
+const adminAnnonceView = require('../views/adminAnnonceView');
+const adminAnnoncevalView = require('../views/adminAnnoncevalView');
 
 function showDelete (req,res) {
     
     res.send(deleteView());
  }
 
- function traitDelete(req, res) {
-    const {id} = req.body;
+function showAdmin (req, res) {
+    const role =req.cookies.role;
+    // db.all('SELECT * FROM users', (err, users) => {
+    //     if (err) {
+    //         console.error('Erreur lors de la récupération des utilisateurs:', err);
+    //         return res.status(500).send('Erreur lors de la récupération des utilisateurs');
+    //     }
 
-    if (!id) {
-        return res.status(400).send("id manquant.");
-    }
+            // db.all(`
+            //     SELECT annonces.*, images.url 
+            //     FROM annonces 
+            //     LEFT JOIN images_annonces ON annonces.id = images_annonces.annonce_id 
+            //     LEFT JOIN images ON images.id = images_annonces.image_id
+            // `, (err, annoncesWithImages) => {
+            // if (err) {
+            //     console.error('Erreur lors de la récupération des annonces:', err);
+            //     return res.status(500).send('Erreur lors de la récupération des annonces');
+            // }
+            // const annoncesGrouped = annoncesWithImages.reduce((acc, row) => {
+            //     const annonceId = row.id;
+        
+            //     if (!acc[annonceId]) {
+            //       acc[annonceId] = {
+            //         ...row, 
+            //         images: [] 
+            //       };
+            //     }
+            
+            //     if (row.url) {
+            //       acc[annonceId].images.push(row.url);
+            //     }
+            
+            //     return acc;
+            //   }, {});
+            
+            //   const annoncesFinal = Object.values(annoncesGrouped);
 
-    const query = `DELETE FROM users WHERE id= ?`;
+        //     const query = `
+        //     SELECT annoncesval.*, images.url
+        //     FROM annoncesval
+        //     LEFT JOIN images_annoncesval ON annoncesval.id = images_annoncesval.annonceval_id
+        //     LEFT JOIN images ON images.id = images_annoncesval.image_id
+        //      `;
 
-    db.run(query, [id], (err) => {
-        if (err) {
-            console.error("Erreur lors de la recherche de l'utilisateur :", err.message);
-            return res.status(500).send("Erreur interne du serveur.");
-        }
+        // db.all(query, (err, annoncesvalWithImages) => {
+        //     if (err) {
+        //         console.error('Erreur lors de la récupération des annonces en attente:', err);
+        //         return res.status(500).send('Erreur lors de la récupération des annonces en attente');
+        //     }
 
-        if (this.changes === 0) {
-            return res.status(401).send("Aucun utilisateur avec cet ID.");
-        }else {
-            res.send("Suppession réussie !");
-        }
-    });
+        //     const annoncesvalGrouped = annoncesvalWithImages.reduce((acc, row) => {
+        //         const annonceId = row.id;
+            
+        //         if (!acc[annonceId]) {
+        //           acc[annonceId] = {
+        //             ...row, 
+        //             images: [] 
+        //           };
+        //         }
+            
+        //         if (row.url) {
+        //           acc[annonceId].images.push(row.url);
+        //         }
+            
+        //         return acc;
+        //       }, {});
+            
+        //       const annoncesvalFinal = Object.values(annoncesvalGrouped);
+              const flash = res.locals.flash || {};
+        res.send(adminView(flash, role));
+
+                //});
+           // }); 
 }
 
-function showAdmin (req, res) {
+function showAdminUser (req, res) {
     const role =req.cookies.role;
     db.all('SELECT * FROM users', (err, users) => {
         if (err) {
@@ -38,36 +93,51 @@ function showAdmin (req, res) {
             return res.status(500).send('Erreur lors de la récupération des utilisateurs');
         }
 
-            db.all(`
-                SELECT annonces.*, images.url 
-                FROM annonces 
-                LEFT JOIN images_annonces ON annonces.id = images_annonces.annonce_id 
-                LEFT JOIN images ON images.id = images_annonces.image_id
-            `, (err, annoncesWithImages) => {
-            if (err) {
-                console.error('Erreur lors de la récupération des annonces:', err);
-                return res.status(500).send('Erreur lors de la récupération des annonces');
-            }
-            const annoncesGrouped = annoncesWithImages.reduce((acc, row) => {
-                const annonceId = row.id;
-        
-                if (!acc[annonceId]) {
-                  acc[annonceId] = {
-                    ...row, 
-                    images: [] 
-                  };
-                }
-            
-                if (row.url) {
-                  acc[annonceId].images.push(row.url);
-                }
-            
-                return acc;
-              }, {});
-            
-              const annoncesFinal = Object.values(annoncesGrouped);
+        const flash = res.locals.flash || {};
+        res.send (adminUserView(users, flash, role ));
+    })
 
-            const query = `
+}
+
+function showAdminAnnonce (req, res){
+    const role = req.cookies.role
+    db.all(`
+        SELECT annonces.*, images.url 
+        FROM annonces 
+        LEFT JOIN images_annonces ON annonces.id = images_annonces.annonce_id 
+        LEFT JOIN images ON images.id = images_annonces.image_id
+    `, (err, annoncesWithImages) => {
+    if (err) {
+        console.error('Erreur lors de la récupération des annonces:', err);
+        return res.status(500).send('Erreur lors de la récupération des annonces');
+    }
+    const annoncesGrouped = annoncesWithImages.reduce((acc, row) => {
+        const annonceId = row.id;
+
+        if (!acc[annonceId]) {
+          acc[annonceId] = {
+            ...row, 
+            images: [] 
+          };
+        }
+    
+        if (row.url) {
+          acc[annonceId].images.push(row.url);
+        }
+    
+        return acc;
+      }, {});
+    
+      const annoncesFinal = Object.values(annoncesGrouped);
+      const flash = res.locals.flash;
+      res.send(adminAnnonceView(annoncesFinal, flash, role));
+    });
+}
+
+function showAdminAnnonceval (req, res) {
+    const role = req.cookies.role;
+
+    const query = `
             SELECT annoncesval.*, images.url
             FROM annoncesval
             LEFT JOIN images_annoncesval ON annoncesval.id = images_annoncesval.annonceval_id
@@ -96,14 +166,34 @@ function showAdmin (req, res) {
             
                 return acc;
               }, {});
-            
-              const annoncesvalFinal = Object.values(annoncesvalGrouped);
-              const flash = res.locals.flash || {};
-        res.send(adminView(users, annoncesFinal, annoncesvalFinal, flash, role));
 
-                });
-            });
-        }); 
+              const annoncesvalFinal = Object.values(annoncesvalGrouped);
+              const flash = res.locals.flash;
+              res.send(adminAnnoncevalView(annoncesvalFinal, flash, role))
+            })
+}
+
+ function traitDelete(req, res) {
+    const {id} = req.body;
+
+    if (!id) {
+        return res.status(400).send("id manquant.");
+    }
+
+    const query = `DELETE FROM users WHERE id= ?`;
+
+    db.run(query, [id], (err) => {
+        if (err) {
+            console.error("Erreur lors de la recherche de l'utilisateur :", err.message);
+            return res.status(500).send("Erreur interne du serveur.");
+        }
+
+        if (this.changes === 0) {
+            return res.status(401).send("Aucun utilisateur avec cet ID.");
+        }else {
+            res.send("Suppession réussie !");
+        }
+    });
 }
 
 function suppUser(req, res) {
@@ -307,4 +397,4 @@ function validAnnonce (req, res) {
 }
 
 
-module.exports = {showDelete, traitDelete, showAdmin, suppUser, suppProd, suppAnn, validAnnonce};
+module.exports = {showDelete, traitDelete, showAdmin, showAdminUser,showAdminAnnonce,showAdminAnnonceval, suppUser, suppProd, suppAnn, validAnnonce};
