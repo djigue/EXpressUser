@@ -19,7 +19,7 @@ function loginView(flash = {}, role) {
                 <label for="mdp">Mot de passe : </label>
                 <input type="password" id="password" name="password">
                 <br>
-                <button type="submit">Se connecter</button>
+                <button type="submit" class="bg-blue-500 text-white px-4 py-2 rounded hover:bg-blue-600">Se connecter</button>
             </form>
             ${footerView()}`;
 }

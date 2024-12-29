@@ -14,7 +14,7 @@ function depAnnView(annonces, annoncesVal, flash = {}, role) {
  html += `<script src="/scripts/notif.js"></script>
         <h2>Vos annonces</h2>
         <ul>`;
-        console.log("Flash transmis au client :", flash);
+
     if (annonces.length === 0) {
         html += `<p>Vous n'avez publié aucune annonce</p>`;
     } else {

@@ -2,6 +2,7 @@ const annonceView = require ('../views/annonceView');
 const depotView = require ('../views/depotView');
 const depAnnView = require('../views/depAnnView');
 const modifView = require ('../views/modifView');
+const annonceVoirView = require ('../views/annonceVoirView');
 const db = require ('../db/db');
 const jwt = require('jsonwebtoken');
 const secretKey = 'bon';
@@ -475,6 +476,46 @@ function showModif (req, res) {
     });  
 }
 
+function showAnnonceVoir (req, res) {
+    const role =req.cookies.role;
+    const annonce_id = req.params.id;
+
+    if (!annonce_id) {
+        req.session.flash = { error: "ID d'annonce invalide" };
+        return res.redirect('/annonce');
+    }
+    const queryAnnonce = `SELECT * FROM annonces WHERE id = ?`;
+    const queryImages = `SELECT i.id, i.url 
+                         FROM images i
+                         INNER JOIN images_annonces ia ON i.id = ia.image_id
+                         WHERE ia.annonce_id = ?`;
+    
+    db.get(queryAnnonce, [annonce_id], (err, annonce) => {
+        if (err) {
+            console.error("Erreur lors de la récupération de l'annonce:", err.message);
+            req.session.flash = { error: "Erreur interne du serveur" };
+            return res.redirect ('/annonce');
+        }
+        
+        if (!annonce) {
+            req.session.flash = { error: "Annonce non trouvée" };
+            return res.redirect ('/annonce');
+        };
+        
+    
+    db.all(queryImages, [annonce_id], (err, images) => {
+        if (err) {
+            console.error("Erreur lors de la récupération des images:", err.message);
+            req.session.flash = { error: "Erreur interne du serveur" };
+            return res.redirect ('/depot');
+        }       
+            const flash = res.locals.flash || {};
+            return res.send(annonceVoirView(annonce, images, flash, role));
+       
+        }); 
+    });  
+}
+
 function suppImage (req, res) {
     const image_id = req.params.id;
     console.log("requete : ", req.params);
@@ -526,4 +567,5 @@ function suppImage (req, res) {
  
  
 
- module.exports = { showAnnonce, showDepot, traitDepot, showDepAnn, traitSupp, traitModif, showModif, suppImage};
+ module.exports = { showAnnonce, showDepot, traitDepot, showDepAnn, traitSupp, traitModif,
+                    showModif, suppImage, showAnnonceVoir};

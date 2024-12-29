@@ -1,6 +1,6 @@
 function showFooter () {
     return ` 
-    <footer>
+    <footer class="bg-zinc-300 mb-0">
         <h5>Express User</h5>
       <section>
        <aside>

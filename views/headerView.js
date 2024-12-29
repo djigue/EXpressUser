@@ -4,12 +4,24 @@ function showHeader (role) {
   <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+    tailwind.config = {
+      theme: {
+        extend: {
+          colors: {
+            clifford: '#da373d',
+          }
+        }
+      }
+    }
+  </script>
     <title>Express User</title>
   </head>
-  <body>
+  <body class="bg-zinc-200 flex flex-col justify-between min-h-screen h-max">
     <header>
-      <nav>
-        <ul>`;
+      <nav class="bg-zinc-300 ">
+        <ul class="flex justify-around">`;
         if (role === 'user' || role === 'admin') {
   html +=`<li><a href="/user">Accueil</a></li>
           <li><a href="/annonce">Voir les annonces</a></li>

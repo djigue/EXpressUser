@@ -31,9 +31,13 @@ function showAdminAnnonceval(annoncesvalFinal, flash, role) {
                </script>
                <script src="/scripts/notif.js"></script><section> 
                <h1>Valider une annonce :</h1>
-               <section>  
-               ${generateList(annoncesvalFinal, '/valider-annonce', 'Valider')}
-               </section>
+               <section>`
+               if (annoncesvalFinal.length === 0) {
+        html +=`<div><p>Il n'y aucune annonces a valider</p></div>`
+               } else {  
+        html +=`${generateList(annoncesvalFinal, '/valider-annonce', 'Valider')}`
+               }
+        html +=`</section> 
                ${footerView()}`;
     return html;
 }

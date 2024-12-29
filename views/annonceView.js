@@ -17,11 +17,12 @@ function AnnonceView(annonces, flash = {}, role) {
             html += `
             <li>
                 <strong>${annonce.titre}</strong> - ${annonce.description} - <strong>${annonce.prix} €</strong>
-                <div class="images-container">
+             <div class="images-container">
                 ${annonce.images.map(image => `
                     <img src="/images/${image}" alt="Image de l'annonce ${annonce.titre}" style="max-width: 150px; margin-right: 10px;">
                 `).join('')}
-            </div>
+             </div>
+                <a href="/annonce-voir/${annonce.id}"><button>Voir</button></a>
                 <form id="panier-${annonce.id}" action="/panier" method="POST">
                     <input type="hidden" name="annonces_id" value="${annonce.id}" />
                     <label>Quantité :</label>

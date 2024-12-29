@@ -5,9 +5,9 @@ const db = require ('../db/db');
 const {authMiddleware} = require('../middlewares/authMiddleware');
 
 router.get('/panier', authMiddleware, (req,res) => {
-    console.log ("en route pour showPanier");
     showPanier (req, res);
 })
+
 router.post('/panier', authMiddleware, (req,res) => {
     traitPanier (req,res);
 })

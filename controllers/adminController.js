@@ -12,92 +12,58 @@ function showDelete (req,res) {
 
 function showAdmin (req, res) {
     const role =req.cookies.role;
-    // db.all('SELECT * FROM users', (err, users) => {
-    //     if (err) {
-    //         console.error('Erreur lors de la récupération des utilisateurs:', err);
-    //         return res.status(500).send('Erreur lors de la récupération des utilisateurs');
-    //     }
+    const flash = res.locals.flash || {};
+    const queryUsers = 'SELECT COUNT(*) AS total_users FROM users';
 
-            // db.all(`
-            //     SELECT annonces.*, images.url 
-            //     FROM annonces 
-            //     LEFT JOIN images_annonces ON annonces.id = images_annonces.annonce_id 
-            //     LEFT JOIN images ON images.id = images_annonces.image_id
-            // `, (err, annoncesWithImages) => {
-            // if (err) {
-            //     console.error('Erreur lors de la récupération des annonces:', err);
-            //     return res.status(500).send('Erreur lors de la récupération des annonces');
-            // }
-            // const annoncesGrouped = annoncesWithImages.reduce((acc, row) => {
-            //     const annonceId = row.id;
+    db.get(queryUsers, (err, row) => {
+        if (err) {
+            console.error('Erreur lors de la récupération du nombre d\'utilisateurs :', err.message);
+            return res.status(500).send('Erreur interne du serveur');
+        }
+
+        const totalUsers = row ? row.total_users : 0;
+       
+        const queryAnnonces = 'SELECT COUNT(*) AS total_annonces FROM annonces';
+        db.get(queryAnnonces, (err, row) => {
+            if (err) {
+                console.error('Erreur lors de la récupération du nombre d\'annonce :', err.message);
+                return res.status(500).send('Erreur interne du serveur');
+            }
+    
+            const totalAnnonces = row ? row.total_annonces : 0;
+
+            const queryAnnoncesval = 'SELECT COUNT(*) AS total_annoncesval FROM annoncesval';
+            db.get(queryAnnoncesval, (err, row) => {
+                if (err) {
+                    console.error('Erreur lors de la récupération du nombre d\'annoncesval :', err.message);
+                    return res.status(500).send('Erreur interne du serveur');
+                }
         
-            //     if (!acc[annonceId]) {
-            //       acc[annonceId] = {
-            //         ...row, 
-            //         images: [] 
-            //       };
-            //     }
-            
-            //     if (row.url) {
-            //       acc[annonceId].images.push(row.url);
-            //     }
-            
-            //     return acc;
-            //   }, {});
-            
-            //   const annoncesFinal = Object.values(annoncesGrouped);
-
-        //     const query = `
-        //     SELECT annoncesval.*, images.url
-        //     FROM annoncesval
-        //     LEFT JOIN images_annoncesval ON annoncesval.id = images_annoncesval.annonceval_id
-        //     LEFT JOIN images ON images.id = images_annoncesval.image_id
-        //      `;
-
-        // db.all(query, (err, annoncesvalWithImages) => {
-        //     if (err) {
-        //         console.error('Erreur lors de la récupération des annonces en attente:', err);
-        //         return res.status(500).send('Erreur lors de la récupération des annonces en attente');
-        //     }
-
-        //     const annoncesvalGrouped = annoncesvalWithImages.reduce((acc, row) => {
-        //         const annonceId = row.id;
-            
-        //         if (!acc[annonceId]) {
-        //           acc[annonceId] = {
-        //             ...row, 
-        //             images: [] 
-        //           };
-        //         }
-            
-        //         if (row.url) {
-        //           acc[annonceId].images.push(row.url);
-        //         }
-            
-        //         return acc;
-        //       }, {});
-            
-        //       const annoncesvalFinal = Object.values(annoncesvalGrouped);
+                const totalAnnoncesval = row ? row.total_annoncesval : 0;
+    
               const flash = res.locals.flash || {};
-        res.send(adminView(flash, role));
-
-                //});
-           // }); 
+              console.log ("users : ", totalUsers);
+              console.log ("annonces : ", totalAnnonces);
+              console.log ("annoncesval : ", totalAnnoncesval);
+              res.send (adminView(totalUsers,totalAnnonces, totalAnnoncesval, flash, role));
+            });
+        });
+    });
 }
 
 function showAdminUser (req, res) {
     const role =req.cookies.role;
+    const flash = res.locals.flash || {};
+
     db.all('SELECT * FROM users', (err, users) => {
         if (err) {
             console.error('Erreur lors de la récupération des utilisateurs:', err);
             return res.status(500).send('Erreur lors de la récupération des utilisateurs');
-        }
-
-        const flash = res.locals.flash || {};
+        }  
         res.send (adminUserView(users, flash, role ));
     })
 
-}
+};
 
 function showAdminAnnonce (req, res){
     const role = req.cookies.role
@@ -132,7 +98,7 @@ function showAdminAnnonce (req, res){
       const flash = res.locals.flash;
       res.send(adminAnnonceView(annoncesFinal, flash, role));
     });
-}
+};
 
 function showAdminAnnonceval (req, res) {
     const role = req.cookies.role;
@@ -171,7 +137,7 @@ function showAdminAnnonceval (req, res) {
               const flash = res.locals.flash;
               res.send(adminAnnoncevalView(annoncesvalFinal, flash, role))
             })
-}
+};
 
  function traitDelete(req, res) {
     const {id} = req.body;
@@ -194,7 +160,7 @@ function showAdminAnnonceval (req, res) {
             res.send("Suppession réussie !");
         }
     });
-}
+};
 
 function suppUser(req, res) {
     const userId = req.params.id || req.body.id;
@@ -236,36 +202,12 @@ function suppUser(req, res) {
 
                     console.log(`Utilisateur ${userId} et ses annonces supprimés avec succès.`);
                     req.session.flash = { success: "L'utilisateur a bien été supprimé." };
-                    res.redirect('/admin');
+                    res.redirect('/admin/user');
                 });
             });
         });
     });
-}
-
-function suppProd (req, res) {
-    const produitId = req.params.id || req.body.id;
-
-    if (!produitId) {
-        return res.status(400).send('ID produit manquant.');
-    }
-
-    const query ='DELETE FROM produits WHERE id = ?';
-
-    db.run(query, [produitId], function (err) {
-        if (err) {
-            console.error(err);
-            return res.status(500).send('Erreur lors de la suppression du produit.');
-        }
-
-        if (this.changes === 0) {
-            return res.status(404).send('Produit non trouvé.');
-        }
-        console.log('id prod :', produitId)
-        req.session.flash = { success: "Le produit a bien été supprimée." };
-        res.redirect('/admin');
-    })
-}; 
+};
 
 function suppAnn (req, res) {
     const annonceId = req.params.id || req.body.id;
@@ -287,7 +229,7 @@ function suppAnn (req, res) {
         }
         console.log(`Annonce supprimée avec succès : ID ${annonceId}`);
         req.session.flash = { success: "L'annonce a bien été supprimée." };
-        res.redirect('/admin');
+        res.redirect('/admin/annonce');
     })
 };     
 
@@ -387,14 +329,14 @@ function validAnnonce (req, res) {
 
                             console.log(`Annonce ID ${annonceId} validée avec succès.`);
                             req.session.flash = { success: "L'annonce a bien été validée." };
-                            res.redirect("/admin");
+                            res.redirect("/admin/annonceval");
                         });
                     });
                 });
             });
         });
     });
-}
+};
 
 
-module.exports = {showDelete, traitDelete, showAdmin, showAdminUser,showAdminAnnonce,showAdminAnnonceval, suppUser, suppProd, suppAnn, validAnnonce};
+module.exports = {showDelete, traitDelete, showAdmin, showAdminUser,showAdminAnnonce,showAdminAnnonceval, suppUser, suppAnn, validAnnonce};

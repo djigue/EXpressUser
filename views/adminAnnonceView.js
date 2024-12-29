@@ -31,14 +31,18 @@ function showAdminAnnonce (annoncesFinal, flash, role) {
                 </script>
                 <script src="/scripts/notif.js"></script><section>
                 <h1>Supprimer une annonce :</h1>
-                <section>
-                <form method="post" action="/supprimer-annonce">
+                <section>`
+                if (annoncesFinal.length === 0) {
+        html +=`<div><p>Aucune annonce</p></div>`    
+                } else {
+        html +=`<form method="post" action="/supprimer-annonce">
                   <label for="id">ID annonce : </label>
                   <input type="text" id="id" name="id">
                   <button type="submit">Supprimer</button>
                 </form>
-                ${generateList(annoncesFinal, '/supprimer-annonce', 'Supprimer')}
-               </section>
+                ${generateList(annoncesFinal, '/supprimer-annonce', 'Supprimer')}`
+                }
+        html+=`</section>
                ${footerView()}`;
 
     return html;
