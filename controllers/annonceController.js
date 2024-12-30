@@ -3,6 +3,13 @@ const depotView = require ('../views/depotView');
 const depAnnView = require('../views/depAnnView');
 const modifView = require ('../views/modifView');
 const annonceVoirView = require ('../views/annonceVoirView');
+const immoView = require ('../views/immoView');
+const vehiculeView = require ('../views/vehiculeView');
+const maisonView = require ('../views/maisonView');
+const elecView = require ('../views/elecView');
+const vetView = require ('../views/vetView');
+const loisirsView = require ('../views/loisirsView');
+const autresView = require ('../views/autresView');
 const db = require ('../db/db');
 const jwt = require('jsonwebtoken');
 const secretKey = 'bon';
@@ -11,19 +18,20 @@ const bcrypt = require('bcrypt');
 function showAnnonce(req, res){
     const role =req.cookies.role;
     const query = `SELECT 
-                   annonces.id AS annonce_id, 
-                   annonces.titre, 
-                   annonces.description, 
-                   annonces.prix,
-                   images.url AS image_url
-                   FROM 
-                       annonces
-                   LEFT JOIN 
-                       images_annonces ON annonces.id = images_annonces.annonce_id
-                   LEFT JOIN 
-                       images ON images_annonces.image_id = images.id
-                   ORDER BY 
-                       annonces.id;`
+                        annonces.id AS annonce_id, 
+                        annonces.titre, 
+                        annonces.description, 
+                        annonces.categorie,
+                        annonces.prix,
+                        (SELECT images.url 
+                         FROM images 
+                         INNER JOIN images_annonces ON images.id = images_annonces.image_id 
+                         WHERE images_annonces.annonce_id = annonces.id 
+                         LIMIT 1) AS image_url
+                    FROM 
+                        annonces
+                    ORDER BY 
+                        annonces.id;`
     db.all(query, (err, rows) => {
         if (err) {
             console.error('Erreur lors de la récupération des annonces :', err.message);
@@ -34,7 +42,7 @@ function showAnnonce(req, res){
         }
 
         const annonces = rows.reduce((acc, row) => {
-            const { annonce_id, titre, description, prix, image_url } = row;
+            const { annonce_id, titre, description, prix, categorie, image_url } = row;
 
             if (!acc[annonce_id]) {
                 acc[annonce_id] = {
@@ -42,6 +50,7 @@ function showAnnonce(req, res){
                     titre,
                     description,
                     prix,
+                    categorie,
                     images: [],
                 };
             }
@@ -58,14 +67,23 @@ function showAnnonce(req, res){
        
         if (!annoncesArray || annoncesArray.length === 0) {
             if (!res.headersSent) {
-                return res.send('<html><body><h1>Aucun produit trouvé.</h1></body></html>');
+                return res.send('<html><body><h1>Aucune annonces trouvé.</h1></body></html>');
             }
             return;
         }
+        
+        const categoriesQuery = `SELECT DISTINCT categorie FROM annonces`;
+        db.all(categoriesQuery, (err, categoriesRows) => {
+            if (err) {
+                console.error('Erreur lors de la récupération des catégories :', err.message);
+                return res.status(500).send('Erreur interne du serveur');
+            }
+
+            const categories = categoriesRows.map(row => row.categorie);
 
         const flash = res.locals.flash || {};
-        const htmlContent = annonceView(annoncesArray, flash, role);   
-        return res.send(htmlContent);
+        return res.send(annonceView(annoncesArray, categories, flash, role));   
+        });  
     });
   }
 
@@ -188,10 +206,10 @@ function showDepAnn(req, res) {
 }
 
  function traitDepot (req, res) {
-    const {titre, description, prix, imagesUser} = req.body;
+    const {titre, description, prix, categorie, imagesUser} = req.body;
     const user_id = req.cookies.id;
 
-    if (!titre || !description || !prix) {
+    if (!titre || !description || !prix || !categorie) {
         console.log('Champs manquants');
         req.session.flash = { error: "Tous les champs du formulaire sont obligatoires." };
         return res.redirect('/depot/formulaire');
@@ -203,11 +221,11 @@ function showDepAnn(req, res) {
     }
 
     const queryAnnonces = `
-      INSERT INTO annoncesval (titre, description, prix, user_id)
-      VALUES (?, ?, ?, ?)
+      INSERT INTO annoncesval (titre, description, prix, categorie, user_id)
+      VALUES (?, ?, ?, ?, ?)
     `;
   
-    db.run(queryAnnonces, [titre, description, prix, user_id], function (err) {
+    db.run(queryAnnonces, [titre, description, prix, categorie, user_id], function (err) {
       if (err) {
         console.error("Erreur lors de l'ajout de l'annonce :", err.message);
         req.session.flash = { error: "Erreur lors de l'ajout de l'annonce." };
@@ -476,44 +494,73 @@ function showModif (req, res) {
     });  
 }
 
-function showAnnonceVoir (req, res) {
-    const role =req.cookies.role;
-    const annonce_id = req.params.id;
+function showAnnonceVoir(req, res) {
+    const role = req.cookies.role;
+    const annonce_id = parseInt(req.params.id, 10);
 
     if (!annonce_id) {
-        req.session.flash = { error: "ID d'annonce invalide" };
         return res.redirect('/annonce');
     }
+
     const queryAnnonce = `SELECT * FROM annonces WHERE id = ?`;
     const queryImages = `SELECT i.id, i.url 
                          FROM images i
                          INNER JOIN images_annonces ia ON i.id = ia.image_id
                          WHERE ia.annonce_id = ?`;
-    
+    const queryNextAnnonce = `SELECT id 
+                              FROM annonces 
+                              WHERE id > ? 
+                              ORDER BY id ASC 
+                              LIMIT 1`;
+    const queryPrevAnnonce = `SELECT id 
+                              FROM annonces 
+                              WHERE id < ? 
+                              ORDER BY id DESC 
+                              LIMIT 1`;
+
     db.get(queryAnnonce, [annonce_id], (err, annonce) => {
         if (err) {
             console.error("Erreur lors de la récupération de l'annonce:", err.message);
             req.session.flash = { error: "Erreur interne du serveur" };
-            return res.redirect ('/annonce');
+            return res.redirect('/annonce');
         }
-        
+
         if (!annonce) {
             req.session.flash = { error: "Annonce non trouvée" };
-            return res.redirect ('/annonce');
-        };
-        
-    
-    db.all(queryImages, [annonce_id], (err, images) => {
-        if (err) {
-            console.error("Erreur lors de la récupération des images:", err.message);
-            req.session.flash = { error: "Erreur interne du serveur" };
-            return res.redirect ('/depot');
-        }       
-            const flash = res.locals.flash || {};
-            return res.send(annonceVoirView(annonce, images, flash, role));
-       
-        }); 
-    });  
+            return res.redirect('/annonce');
+        }
+
+        db.all(queryImages, [annonce_id], (err, images) => {
+            if (err) {
+                console.error("Erreur lors de la récupération des images:", err.message);
+                req.session.flash = { error: "Erreur interne du serveur" };
+                return res.redirect('/annonce');
+            }
+
+            db.get(queryNextAnnonce, [annonce_id], (err, nextAnnonce) => {
+                if (err) {
+                    console.error("Erreur lors de la récupération de l'annonce suivante:", err.message);
+                    req.session.flash = { error: "Erreur interne du serveur" };
+                    return res.redirect('/annonce');
+                }
+
+                db.get(queryPrevAnnonce, [annonce_id], (err, prevAnnonce) => {
+                    if (err) {
+                        console.error("Erreur lors de la récupération de l'annonce précédente:", err.message);
+                        req.session.flash = { error: "Erreur interne du serveur" };
+                        return res.redirect('/annonce');
+                    }
+
+                    const nextAnnonceId = nextAnnonce ? nextAnnonce.id : null;
+                    const prevAnnonceId = prevAnnonce ? prevAnnonce.id : null;
+                    const flash = res.locals.flash || {};
+                    return res.send(
+                        annonceVoirView(annonce, images, flash, role, nextAnnonceId, prevAnnonceId)
+                    );
+                });
+            });
+        });
+    });
 }
 
 function suppImage (req, res) {
@@ -565,7 +612,412 @@ function suppImage (req, res) {
  });
 }
  
- 
+function showImmo(req, res) {
+    const role = req.cookies.role;
+    const queryAnnonces = `SELECT 
+                                annonces.id AS annonce_id, 
+                                annonces.titre, 
+                                annonces.description, 
+                                annonces.categorie, 
+                                annonces.prix
+                            FROM annonces
+                            WHERE categorie = "immobilier"`;
+
+    db.all(queryAnnonces, (err, rows) => {
+        if (err) {
+            console.error('Erreur lors de la récupération des annonces :', err.message);
+            if (!res.headersSent) {
+                return res.status(500).send('Erreur interne du serveur');
+            }
+            return;
+        }
+
+        const queryImages = `SELECT 
+                                 images.url AS image_url, 
+                                 images_annonces.annonce_id
+                             FROM images 
+                             INNER JOIN images_annonces 
+                             ON images.id = images_annonces.image_id`;
+
+        db.all(queryImages, (err, imageRows) => {
+            if (err) {
+                console.error('Erreur lors de la récupération des images :', err.message);
+                if (!res.headersSent) {
+                    return res.status(500).send('Erreur interne du serveur');
+                }
+                return;
+            }
+
+            const imagesByAnnonce = imageRows.reduce((acc, row) => {
+                const { annonce_id, image_url } = row;
+                if (!acc[annonce_id]) {
+                    acc[annonce_id] = [];
+                }
+                acc[annonce_id].push(image_url);
+                return acc;
+            }, {});
+
+            const annonces = rows.map(annonce => {
+                return {
+                    ...annonce,
+                    images: imagesByAnnonce[annonce.annonce_id] || []
+                };
+            });
+
+            const flash = res.locals.flash || {};
+            return res.send(immoView(annonces, flash, role));
+        });
+    });
+}
+
+function showVehicule(req, res) {
+    const role = req.cookies.role;
+    const queryAnnonces = `SELECT 
+                                annonces.id AS annonce_id, 
+                                annonces.titre, 
+                                annonces.description, 
+                                annonces.categorie, 
+                                annonces.prix
+                            FROM annonces
+                            WHERE categorie = "véhicules"`;
+
+    db.all(queryAnnonces, (err, rows) => {
+        if (err) {
+            console.error('Erreur lors de la récupération des annonces :', err.message);
+            if (!res.headersSent) {
+                return res.status(500).send('Erreur interne du serveur');
+            }
+            return;
+        }
+
+        const queryImages = `SELECT 
+                                 images.url AS image_url, 
+                                 images_annonces.annonce_id
+                             FROM images 
+                             INNER JOIN images_annonces 
+                             ON images.id = images_annonces.image_id`;
+
+        db.all(queryImages, (err, imageRows) => {
+            if (err) {
+                console.error('Erreur lors de la récupération des images :', err.message);
+                if (!res.headersSent) {
+                    return res.status(500).send('Erreur interne du serveur');
+                }
+                return;
+            }
+
+            const imagesByAnnonce = imageRows.reduce((acc, row) => {
+                const { annonce_id, image_url } = row;
+                if (!acc[annonce_id]) {
+                    acc[annonce_id] = [];
+                }
+                acc[annonce_id].push(image_url);
+                return acc;
+            }, {});
+
+            const annonces = rows.map(annonce => {
+                return {
+                    ...annonce,
+                    images: imagesByAnnonce[annonce.annonce_id] || []
+                };
+            });
+
+            const flash = res.locals.flash || {};
+            return res.send(vehiculeView(annonces, flash, role));
+        });
+    });
+}
+
+function showMaison(req, res) {
+    const role = req.cookies.role;
+    const queryAnnonces = `SELECT 
+                                annonces.id AS annonce_id, 
+                                annonces.titre, 
+                                annonces.description, 
+                                annonces.categorie, 
+                                annonces.prix
+                            FROM annonces
+                            WHERE categorie = "maison et jardin"`;
+
+    db.all(queryAnnonces, (err, rows) => {
+        if (err) {
+            console.error('Erreur lors de la récupération des annonces :', err.message);
+            if (!res.headersSent) {
+                return res.status(500).send('Erreur interne du serveur');
+            }
+            return;
+        }
+
+        const queryImages = `SELECT 
+                                 images.url AS image_url, 
+                                 images_annonces.annonce_id
+                             FROM images 
+                             INNER JOIN images_annonces 
+                             ON images.id = images_annonces.image_id`;
+
+        db.all(queryImages, (err, imageRows) => {
+            if (err) {
+                console.error('Erreur lors de la récupération des images :', err.message);
+                if (!res.headersSent) {
+                    return res.status(500).send('Erreur interne du serveur');
+                }
+                return;
+            }
+
+            const imagesByAnnonce = imageRows.reduce((acc, row) => {
+                const { annonce_id, image_url } = row;
+                if (!acc[annonce_id]) {
+                    acc[annonce_id] = [];
+                }
+                acc[annonce_id].push(image_url);
+                return acc;
+            }, {});
+
+            const annonces = rows.map(annonce => {
+                return {
+                    ...annonce,
+                    images: imagesByAnnonce[annonce.annonce_id] || []
+                };
+            });
+
+            const flash = res.locals.flash || {};
+            return res.send(maisonView(annonces, flash, role));
+        });
+    });
+}
+
+function showElec(req, res) {
+    const role = req.cookies.role;
+    const queryAnnonces = `SELECT 
+                                annonces.id AS annonce_id, 
+                                annonces.titre, 
+                                annonces.description, 
+                                annonces.categorie, 
+                                annonces.prix
+                            FROM annonces
+                            WHERE categorie = "electronique"`;
+
+    db.all(queryAnnonces, (err, rows) => {
+        if (err) {
+            console.error('Erreur lors de la récupération des annonces :', err.message);
+            if (!res.headersSent) {
+                return res.status(500).send('Erreur interne du serveur');
+            }
+            return;
+        }
+
+        const queryImages = `SELECT 
+                                 images.url AS image_url, 
+                                 images_annonces.annonce_id
+                             FROM images 
+                             INNER JOIN images_annonces 
+                             ON images.id = images_annonces.image_id`;
+
+        db.all(queryImages, (err, imageRows) => {
+            if (err) {
+                console.error('Erreur lors de la récupération des images :', err.message);
+                if (!res.headersSent) {
+                    return res.status(500).send('Erreur interne du serveur');
+                }
+                return;
+            }
+
+            const imagesByAnnonce = imageRows.reduce((acc, row) => {
+                const { annonce_id, image_url } = row;
+                if (!acc[annonce_id]) {
+                    acc[annonce_id] = [];
+                }
+                acc[annonce_id].push(image_url);
+                return acc;
+            }, {});
+
+            const annonces = rows.map(annonce => {
+                return {
+                    ...annonce,
+                    images: imagesByAnnonce[annonce.annonce_id] || []
+                };
+            });
+
+            const flash = res.locals.flash || {};
+            return res.send(elecView(annonces, flash, role));
+        });
+    });
+}
+
+function showVet(req, res) {
+    const role = req.cookies.role;
+    const queryAnnonces = `SELECT 
+                                annonces.id AS annonce_id, 
+                                annonces.titre, 
+                                annonces.description, 
+                                annonces.categorie, 
+                                annonces.prix
+                            FROM annonces
+                            WHERE categorie = "vetements"`;
+
+    db.all(queryAnnonces, (err, rows) => {
+        if (err) {
+            console.error('Erreur lors de la récupération des annonces :', err.message);
+            if (!res.headersSent) {
+                return res.status(500).send('Erreur interne du serveur');
+            }
+            return;
+        }
+
+        const queryImages = `SELECT 
+                                 images.url AS image_url, 
+                                 images_annonces.annonce_id
+                             FROM images 
+                             INNER JOIN images_annonces 
+                             ON images.id = images_annonces.image_id`;
+
+        db.all(queryImages, (err, imageRows) => {
+            if (err) {
+                console.error('Erreur lors de la récupération des images :', err.message);
+                if (!res.headersSent) {
+                    return res.status(500).send('Erreur interne du serveur');
+                }
+                return;
+            }
+
+            const imagesByAnnonce = imageRows.reduce((acc, row) => {
+                const { annonce_id, image_url } = row;
+                if (!acc[annonce_id]) {
+                    acc[annonce_id] = [];
+                }
+                acc[annonce_id].push(image_url);
+                return acc;
+            }, {});
+
+            const annonces = rows.map(annonce => {
+                return {
+                    ...annonce,
+                    images: imagesByAnnonce[annonce.annonce_id] || []
+                };
+            });
+
+            const flash = res.locals.flash || {};
+            return res.send(vetView(annonces, flash, role));
+        });
+    });
+}
+
+function showLoisirs(req, res) {
+    const role = req.cookies.role;
+    const queryAnnonces = `SELECT 
+                                annonces.id AS annonce_id, 
+                                annonces.titre, 
+                                annonces.description, 
+                                annonces.categorie, 
+                                annonces.prix
+                            FROM annonces
+                            WHERE categorie = "loisirs"`;
+
+    db.all(queryAnnonces, (err, rows) => {
+        if (err) {
+            console.error('Erreur lors de la récupération des annonces :', err.message);
+            if (!res.headersSent) {
+                return res.status(500).send('Erreur interne du serveur');
+            }
+            return;
+        }
+
+        const queryImages = `SELECT 
+                                 images.url AS image_url, 
+                                 images_annonces.annonce_id
+                             FROM images 
+                             INNER JOIN images_annonces 
+                             ON images.id = images_annonces.image_id`;
+
+        db.all(queryImages, (err, imageRows) => {
+            if (err) {
+                console.error('Erreur lors de la récupération des images :', err.message);
+                if (!res.headersSent) {
+                    return res.status(500).send('Erreur interne du serveur');
+                }
+                return;
+            }
+
+            const imagesByAnnonce = imageRows.reduce((acc, row) => {
+                const { annonce_id, image_url } = row;
+                if (!acc[annonce_id]) {
+                    acc[annonce_id] = [];
+                }
+                acc[annonce_id].push(image_url);
+                return acc;
+            }, {});
+
+            const annonces = rows.map(annonce => {
+                return {
+                    ...annonce,
+                    images: imagesByAnnonce[annonce.annonce_id] || []
+                };
+            });
+
+            const flash = res.locals.flash || {};
+            return res.send(loisirsView(annonces, flash, role));
+        });
+    });
+}
+
+function showAutres(req, res) {
+    const role = req.cookies.role;
+    const queryAnnonces = `SELECT 
+                                annonces.id AS annonce_id, 
+                                annonces.titre, 
+                                annonces.description, 
+                                annonces.categorie, 
+                                annonces.prix
+                            FROM annonces
+                            WHERE categorie = "autres"`;
+
+    db.all(queryAnnonces, (err, rows) => {
+        if (err) {
+            console.error('Erreur lors de la récupération des annonces :', err.message);
+            if (!res.headersSent) {
+                return res.status(500).send('Erreur interne du serveur');
+            }
+            return;
+        }
+
+        const queryImages = `SELECT 
+                                 images.url AS image_url, 
+                                 images_annonces.annonce_id
+                             FROM images 
+                             INNER JOIN images_annonces 
+                             ON images.id = images_annonces.image_id`;
+
+        db.all(queryImages, (err, imageRows) => {
+            if (err) {
+                console.error('Erreur lors de la récupération des images :', err.message);
+                if (!res.headersSent) {
+                    return res.status(500).send('Erreur interne du serveur');
+                }
+                return;
+            }
+
+            const imagesByAnnonce = imageRows.reduce((acc, row) => {
+                const { annonce_id, image_url } = row;
+                if (!acc[annonce_id]) {
+                    acc[annonce_id] = [];
+                }
+                acc[annonce_id].push(image_url);
+                return acc;
+            }, {});
+
+            const annonces = rows.map(annonce => {
+                return {
+                    ...annonce,
+                    images: imagesByAnnonce[annonce.annonce_id] || []
+                };
+            });
+
+            const flash = res.locals.flash || {};
+            return res.send(autresView(annonces, flash, role));
+        });
+    });
+}
+
 
  module.exports = { showAnnonce, showDepot, traitDepot, showDepAnn, traitSupp, traitModif,
-                    showModif, suppImage, showAnnonceVoir};
+                    showModif, suppImage, showAnnonceVoir, showImmo, showVehicule, showMaison, showElec, showVet, showLoisirs, showAutres};

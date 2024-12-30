@@ -140,7 +140,7 @@ function traitLogin(req, res) {
     res.clearCookie('name');
     res.clearCookie('role');
     req.session.flash = { success: "Déconnexion réussie" };
-    res.redirect('/login'); 
+    res.redirect('/home'); 
         
 }
 

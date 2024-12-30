@@ -17,10 +17,13 @@ function homeView (rows, flash = {}, role) {
 
       rows.forEach(annonce => {
         html += `
-        <li>
-            <strong>${annonce.titre}</strong> - ${annonce.description} - <strong>${annonce.prix} €</strong>
-            
-        </li>`;
+          <li>
+            <strong>${annonce.titre}</strong> - ${annonce.description} - <strong>${annonce.prix} €</strong>`
+          if (role === 'admin' || role === 'user') { 
+        html +=     `<a href="/annonce-voir/${annonce.id}"><button>Voir</button></a>`
+          } 
+        html += `         
+          </li>`;
     });
 
     if (rows.length === 0) {

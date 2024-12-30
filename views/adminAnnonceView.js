@@ -6,7 +6,7 @@ function generateList(items, actionPath, buttonText) {
         <ul>
         ${items.map(item => `
             <li>
-                ${item.id} - ${item.titre} - ${item.description}
+                ${item.categorie} - ${item.id} - ${item.titre} - ${item.description}
                 <div>
                     ${item.images ? item.images.map(image => `
                         <img src="/images/${image}" alt="Image de l'annonce" style="max-width: 100px; max-height: 100px;">

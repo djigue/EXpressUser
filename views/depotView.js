@@ -28,6 +28,17 @@ function depotView(flash = {}, role) {
                 
                 <fieldset>
                     <legend>2- L'annonce</legend>
+                    <label for="categorie">CAtégorie : </label>
+                    <select id="categorie" name="categorie">
+                     <option></option>
+                     <option value="immobilier">Immobilier</option>
+                     <option value="maison">Maison et Jardin</option>
+                     <option value="vehicule">Véhicules</option>
+                     <option value="vetements">Vêtements</option>
+                     <option value="elec">Électronique</option>
+                     <option value="loisirs">Loisirs</option>
+                     <option value="autres">Autres</option>
+                    </select>
                     <label for="titre">Titre : </label>
                     <input type="text" id="titre" name="titre">
                     <br>

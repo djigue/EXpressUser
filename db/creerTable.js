@@ -9,23 +9,23 @@ const db = new sqlite3.Database('../database.sqlite', (err) => {
     }
 }); 
 
-function ajouterTable () {
-    
-     const query = `CREATE TABLE images_annoncesval (
-  image_id INTEGER NOT NULL,
-  annonceval_id INTEGER NOT NULL,
-  PRIMARY KEY (image_id, annonceval_id),
-  FOREIGN KEY (image_id) REFERENCES images (id) ON DELETE CASCADE,
-  FOREIGN KEY (annonceval_id) REFERENCES annoncesval (id) ON DELETE CASCADE
-);`;
+function creeTable(nomTable) {
+    const Query = `
+        CREATE TABLE depot (
+    user_id INTEGER NOT NULL,
+    annonce_id INTEGER NOT NULL,
+    PRIMARY KEY (user_id, annonce_id),
+    FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE,
+    FOREIGN KEY (annonce_id) REFERENCES annonces(id) ON DELETE CASCADE
+);`
 
-                     db.run(query, function (err) {
-                        if (err) {
-                            console.error("Erreur lors de l'ajout de la table :", err.message);
-                        } else {
-                            console.log(`Table ajouté avec succès`);
-                        }
-                    });
+    db.run(Query, function (err) {
+        if (err) {
+            console.error("Erreur lors de la création de la table :", err.message);
+        } else {
+            console.log(`Table (nom : ${nomTable}) crée avec succès`);
+        }
+    });
 }
 
-ajouterTable();
+creeTable('depot');

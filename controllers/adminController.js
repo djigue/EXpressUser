@@ -236,8 +236,6 @@ function suppAnn (req, res) {
 function validAnnonce (req, res) {
     const annonceId = req.params.id || req.body.id;
 
-    console.log('ID de l\'annonce à valider:', annonceId);
-
     if (!annonceId) {
         return res.status(400).send("ID annonce manquant.");
     }
@@ -245,7 +243,9 @@ function validAnnonce (req, res) {
     db.serialize(() => {
         
         const queryGetUserId = `
-            SELECT user_id FROM annoncesval WHERE id = ?;
+            SELECT user_id, categorie
+            FROM annoncesval 
+            WHERE id = ?;
         `;
         
         db.get(queryGetUserId, [annonceId], (err, row) => {
@@ -258,16 +258,16 @@ function validAnnonce (req, res) {
                 return res.status(404).send("Annonce non trouvée.");
             }
 
-            const userId = row.user_id;
+            const {user_id: userId, categorie} = row;
 
             const queryInsertAnnonce = `
-                INSERT INTO annonces (titre, description, prix, date_creation, user_id)
-                SELECT titre, description, prix, date_creation, user_id
+                INSERT INTO annonces (titre, description, prix, date_creation, categorie, user_id)
+                SELECT titre, description, prix, date_creation, ?, user_id
                 FROM annoncesval
                 WHERE id = ?;
             `;
 
-            db.run(queryInsertAnnonce, [annonceId], function (err) {
+            db.run(queryInsertAnnonce, [categorie, annonceId], function (err) {
                 if (err) {
                     console.error("Erreur lors de l'insertion dans annonces :", err.message);
                     return res.status(500).send("Erreur lors de la validation de l'annonce.");
@@ -276,8 +276,12 @@ function validAnnonce (req, res) {
                 const newAnnonceId = this.lastID;
 
                 const queryGetImages = `
-                    SELECT url, id FROM images
-                    WHERE id IN (SELECT image_id FROM images_annoncesval WHERE annonceval_id = ?);
+                    SELECT url, id 
+                    FROM images
+                    WHERE id IN (
+                    SELECT image_id 
+                    FROM images_annoncesval 
+                    WHERE annonceval_id = ?);
                 `;
                 db.all(queryGetImages, [annonceId], (err, images) => {
                     if (err) {
@@ -292,7 +296,6 @@ function validAnnonce (req, res) {
                         INSERT INTO images_annonces (image_id, annonce_id)
                         VALUES (?, ?);
                     `;
-                    console.log ("annonceId : ", newAnnonceId);
                    
                     images.forEach((image) => {
                         const imageId = image.id; 
@@ -303,9 +306,8 @@ function validAnnonce (req, res) {
                             }
                         });
                     });
-
-                    console.log(`Mise à jour des images réussie pour l'annonce ID: ${newAnnonceId}`);
                 }
+                
                     const queryInsertDepot = `
                         INSERT INTO depot (user_id, annonce_id)
                         VALUES (?, ?);
