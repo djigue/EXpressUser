@@ -1,7 +1,7 @@
 const express = require('express');
 const router = express.Router();
 const db = require ('../db/db');
-const {showAdmin, showAdminUser, showAdminAnnonce, showAdminAnnonceval, showDelete, suppUser, validAnnonce, suppAnn, suppProd} = require('../controllers/adminController');
+const {showAdmin, showAdminUser, showAdminAnnonce, showAdminAnnonceval, showDelete, suppUser, validAnnonce, suppAnn} = require('../controllers/adminController');
 const {authMiddleware, admin} = require('../middlewares/authMiddleware');
 
 router.get ('/delete', authMiddleware, admin, (req,res) =>{

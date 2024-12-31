@@ -3,47 +3,66 @@ const footerView = require('../views/footerView');
 
 function generateList(items, actionPath, buttonText) {
     return `
-        <ul>
+        <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
         ${items.map(item => `
-            <li>
-                ${item.categorie} - ${item.id} - ${item.titre} - ${item.description}
-                <div>
-                    ${item.images ? item.images.map(image => `
-                        <img src="/images/${image}" alt="Image de l'annonce" style="max-width: 100px; max-height: 100px;">
-                    `).join('') : 'Aucune image'}
+            <div class="bg-white shadow-lg rounded-lg p-6">
+                <h3 class="text-xl font-semibold mb-2">${item.titre}</h3>
+                <p class="text-gray-700 mb-4">${item.description}</p>
+                <p class="text-gray-600 mb-4">Catégorie : ${item.categorie}</p>
+                <div class="flex flex-wrap gap-2 mb-4">
+                    ${item.images && item.images.length > 0 
+                        ? item.images.map(image => `
+                            <img src="/images/${image}" alt="Image de l'annonce" class="w-24 h-24 object-cover rounded-md">
+                        `).join('') 
+                        : '<p>Aucune image</p>'
+                    }
                 </div>
-                <form method="POST" action="${actionPath}/${item.id}" style="display:inline;">
-                    <button type="submit">${buttonText}</button>
-                </form>
-            </li>
+                <div class="flex justify-between">
+                    <form method="POST" action="${actionPath}/${item.id}" style="display:inline;">
+                        <button type="submit" class="bg-red-500 text-white px-4 py-2 rounded hover:bg-red-600">${buttonText}</button>
+                    </form>
+                </div>
+            </div>
         `).join('')}
-        </ul>`;
+        </div>`;
 }
 
-function showAdminAnnonce (annoncesFinal, flash, role) {
+function showAdminAnnonce(annoncesFinal, flash, role) {
     let html = `${headerView(role)}
                 <div id="notifications" style="position: fixed; top: 10px; right: 10px; z-index: 1000; max-width: 300px;"></div>
                 <script>
                   const flash = {
-                  success: "${flash.success || ''}",
-                  error: "${flash.error || ''}"
+                    success: "${flash.success || ''}",
+                    error: "${flash.error || ''}"
                   };
                 </script>
-                <script src="/scripts/notif.js"></script><section>
-                <h1>Supprimer une annonce :</h1>
-                <section>`
-                if (annoncesFinal.length === 0) {
-        html +=`<div><p>Aucune annonce</p></div>`    
-                } else {
-        html +=`<form method="post" action="/supprimer-annonce">
-                  <label for="id">ID annonce : </label>
-                  <input type="text" id="id" name="id">
-                  <button type="submit">Supprimer</button>
-                </form>
-                ${generateList(annoncesFinal, '/supprimer-annonce', 'Supprimer')}`
-                }
-        html+=`</section>
-               ${footerView()}`;
+                <script src="/scripts/notif.js"></script>
+                <div class="min-h-screen bg-zinc-200 py-10">
+                  <div class="container mx-auto px-4">
+                    <h1 class="text-3xl font-bold text-center mb-8">Supprimer une annonce</h1>
+                    <section>`;
+
+    if (annoncesFinal.length === 0) {
+        html += `
+          <div class="bg-white shadow-md rounded-lg p-6 text-center">
+            <p class="text-gray-700">Aucune annonce à supprimer.</p>
+          </div>`;
+    } else {
+        html += `
+          <form method="post" action="/supprimer-annonce" class="bg-white shadow-lg rounded-lg p-6 mb-6 w-1/4">
+            <label for="id" class="block text-lg font-medium mb-2">ID annonce :</label>
+            <input type="text" id="id" name="id" class="border border-gray-300 p-2 rounded w-1/2 mb-4" required>
+            <button type="submit" class="bg-red-500 text-white px-4 py-2 rounded hover:bg-red-600">Supprimer</button>
+          </form>
+          ${generateList(annoncesFinal, '/supprimer-annonce', 'Supprimer')}
+        `;
+    }
+
+    html += `
+                    </section>
+                  </div>
+                </div>
+                ${footerView()}`;
 
     return html;
 }

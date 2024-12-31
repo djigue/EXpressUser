@@ -1,7 +1,9 @@
 const headerView = require ('../views/headerView');
 const footerView = require ('../views/footerView');
 
-function AnnonceVoirView(annonce, images, flash = {}, role, nextAnnonceId, prevAnnonceId) {
+function AnnonceVoirView(annonce, images, flash = {}, role, nextAnnonceId, prevAnnonceId, categorie) {
+    const categorieQuery = categorie ? `?categorie=${encodeURIComponent(categorie)}` : '';
+
     let html = `${headerView(role)}
                 <h1>Liste des annonces</h1>
                 <div id="notifications" style="position: fixed; top: 10px; right: 10px; z-index: 1000; max-width: 300px;"></div>
@@ -45,7 +47,7 @@ function AnnonceVoirView(annonce, images, flash = {}, role, nextAnnonceId, prevA
     </div>
     <div>
         ${prevAnnonceId ? `
-            <a href="/annonce-voir/${prevAnnonceId}?prev=1">
+            <a href="/annonce-voir/${prevAnnonceId}${categorieQuery}">
                 <button>Annonce précédente</button>
             </a>` : `
             <p>Il n'y a pas d'autre annonce.</p>
@@ -53,7 +55,7 @@ function AnnonceVoirView(annonce, images, flash = {}, role, nextAnnonceId, prevA
     </div>
     <div>
         ${nextAnnonceId ? `
-            <a href="/annonce-voir/${nextAnnonceId}?next=1">
+            <a href="/annonce-voir/${nextAnnonceId}${categorieQuery}">
                 <button>Annonce suivante</button>
             </a>` : `
             <p>Il n'y a pas d'autre annonce.</p>

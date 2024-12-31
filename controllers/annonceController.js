@@ -82,7 +82,7 @@ function showAnnonce(req, res){
             const categories = categoriesRows.map(row => row.categorie);
 
         const flash = res.locals.flash || {};
-        return res.send(annonceView(annoncesArray, categories, flash, role));   
+        return res.send(annonceView(annoncesArray, flash, role));   
         });  
     });
   }
@@ -496,7 +496,10 @@ function showModif (req, res) {
 
 function showAnnonceVoir(req, res) {
     const role = req.cookies.role;
-    const annonce_id = parseInt(req.params.id, 10);
+    const annonce_id = req.params.id;
+    const categorie = req.query.categorie || null; 
+    console.log("cat recup : ", categorie);
+    console.log("annonce_id : ", annonce_id);
 
     if (!annonce_id) {
         return res.redirect('/annonce');
@@ -507,16 +510,6 @@ function showAnnonceVoir(req, res) {
                          FROM images i
                          INNER JOIN images_annonces ia ON i.id = ia.image_id
                          WHERE ia.annonce_id = ?`;
-    const queryNextAnnonce = `SELECT id 
-                              FROM annonces 
-                              WHERE id > ? 
-                              ORDER BY id ASC 
-                              LIMIT 1`;
-    const queryPrevAnnonce = `SELECT id 
-                              FROM annonces 
-                              WHERE id < ? 
-                              ORDER BY id DESC 
-                              LIMIT 1`;
 
     db.get(queryAnnonce, [annonce_id], (err, annonce) => {
         if (err) {
@@ -530,6 +523,14 @@ function showAnnonceVoir(req, res) {
             return res.redirect('/annonce');
         }
 
+        const queryNextAnnonce = categorie
+            ? `SELECT id FROM annonces WHERE id > ? AND categorie = ? ORDER BY id ASC LIMIT 1`
+            : `SELECT id FROM annonces WHERE id > ? ORDER BY id ASC LIMIT 1`;
+
+        const queryPrevAnnonce = categorie
+            ? `SELECT id FROM annonces WHERE id < ? AND categorie = ? ORDER BY id DESC LIMIT 1`
+            : `SELECT id FROM annonces WHERE id < ? ORDER BY id DESC LIMIT 1`;
+
         db.all(queryImages, [annonce_id], (err, images) => {
             if (err) {
                 console.error("Erreur lors de la récupération des images:", err.message);
@@ -537,14 +538,14 @@ function showAnnonceVoir(req, res) {
                 return res.redirect('/annonce');
             }
 
-            db.get(queryNextAnnonce, [annonce_id], (err, nextAnnonce) => {
+            db.get(queryNextAnnonce, categorie ? [annonce_id, categorie] : [annonce_id], (err, nextAnnonce) => {
                 if (err) {
                     console.error("Erreur lors de la récupération de l'annonce suivante:", err.message);
                     req.session.flash = { error: "Erreur interne du serveur" };
                     return res.redirect('/annonce');
                 }
 
-                db.get(queryPrevAnnonce, [annonce_id], (err, prevAnnonce) => {
+                db.get(queryPrevAnnonce, categorie ? [annonce_id, categorie] : [annonce_id], (err, prevAnnonce) => {
                     if (err) {
                         console.error("Erreur lors de la récupération de l'annonce précédente:", err.message);
                         req.session.flash = { error: "Erreur interne du serveur" };
@@ -555,7 +556,7 @@ function showAnnonceVoir(req, res) {
                     const prevAnnonceId = prevAnnonce ? prevAnnonce.id : null;
                     const flash = res.locals.flash || {};
                     return res.send(
-                        annonceVoirView(annonce, images, flash, role, nextAnnonceId, prevAnnonceId)
+                        annonceVoirView(annonce, images, flash, role, nextAnnonceId, prevAnnonceId, categorie)
                     );
                 });
             });
@@ -614,22 +615,18 @@ function suppImage (req, res) {
  
 function showImmo(req, res) {
     const role = req.cookies.role;
-    const queryAnnonces = `SELECT 
-                                annonces.id AS annonce_id, 
-                                annonces.titre, 
-                                annonces.description, 
-                                annonces.categorie, 
-                                annonces.prix
-                            FROM annonces
+    const queryAnnonces = `SELECT  annonces.id AS annonce_id, 
+                                   annonces.titre, 
+                                   annonces.description, 
+                                   annonces.categorie, 
+                                   annonces.prix
+                            FROM annonces 
                             WHERE categorie = "immobilier"`;
 
-    db.all(queryAnnonces, (err, rows) => {
+    db.all(queryAnnonces, (err, annonces) => {
         if (err) {
             console.error('Erreur lors de la récupération des annonces :', err.message);
-            if (!res.headersSent) {
-                return res.status(500).send('Erreur interne du serveur');
-            }
-            return;
+            return res.status(500).send('Erreur interne du serveur');
         }
 
         const queryImages = `SELECT 
@@ -642,10 +639,7 @@ function showImmo(req, res) {
         db.all(queryImages, (err, imageRows) => {
             if (err) {
                 console.error('Erreur lors de la récupération des images :', err.message);
-                if (!res.headersSent) {
-                    return res.status(500).send('Erreur interne du serveur');
-                }
-                return;
+                return res.status(500).send('Erreur interne du serveur');
             }
 
             const imagesByAnnonce = imageRows.reduce((acc, row) => {
@@ -657,15 +651,13 @@ function showImmo(req, res) {
                 return acc;
             }, {});
 
-            const annonces = rows.map(annonce => {
-                return {
-                    ...annonce,
-                    images: imagesByAnnonce[annonce.annonce_id] || []
-                };
-            });
-
+            const annoncesImages = annonces.map(annonce => ({
+                ...annonce,
+                images: imagesByAnnonce[annonce.annonce_id] || []
+            }));
+console.log("images showimmo : ", annoncesImages);
             const flash = res.locals.flash || {};
-            return res.send(immoView(annonces, flash, role));
+            res.send(immoView(annoncesImages, flash, role));
         });
     });
 }

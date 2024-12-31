@@ -64,7 +64,6 @@ function traitPanier(req, res) {
     }
 
     if (!annonces_id) {
-        console.log('ID annonce manquant');
         req.session.flash = { error: "ID annonce manquant." };
         return res.redirect('/annonce')
     }
@@ -78,7 +77,6 @@ function traitPanier(req, res) {
   
     db.run(query, [user_id, annonces_id, quantite || 1], function (err) {
       if (err) {
-        console.error("Erreur lors de l'ajout au panier :", err.message);
         req.session.flash = { error: "Erreur lors de l'ajout au panier." };
         return res.redirect('/annonce')
       }

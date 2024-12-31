@@ -1,10 +1,18 @@
 const headerView = require ('../views/headerView');
 const footerView = require ('../views/footerView');
 
-function annonceView(annonces, categories, flash = {}, role) {
+function annonceView(annonces, flash = {}, role) {
+    console.log("flash : ", flash);
     let html = `${headerView(role)}
         <div class="bg-zinc-200 min-h-screen py-8">
-            <div id="notifications" class="fixed top-4 right-4 z-50 max-w-xs"></div>
+           <div id="notifications" style="position: fixed; top: 10px; right: 10px; z-index: 1000; max-width: 300px;"></div>
+        <script>
+             const flash = {
+            success: "${flash.success || ''}",
+            error: "${flash.error || ''}"
+        };
+        </script>
+        <script src="/scripts/notif.js"></script>
             <div class="container mx-auto">
                 <h1 class="text-3xl font-bold text-center mb-8">Liste des annonces</h1>
                 <div class="mb-8 flex flex-wrap justify-center gap-4">

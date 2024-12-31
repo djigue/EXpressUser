@@ -10,55 +10,72 @@ function depAnnView(annonces, annoncesVal, flash = {}, role) {
             success: "${flash.success || ''}",
             error: "${flash.error || ''}"
         };
-    </script>`;
- html += `<script src="/scripts/notif.js"></script>
-        <h2>Vos annonces</h2>
-        <ul>`;
+    </script>
+    <script src="/scripts/notif.js"></script>
+    <div class="min-h-screen bg-zinc-200 py-10">
+        <div class="container mx-auto px-4">
+            <h2 class="text-2xl font-bold mb-6">Vos annonces</h2>
+            <div class="grid grid-cols-1 sm:grid-cols-2 gap-6">`;
 
     if (annonces.length === 0) {
-        html += `<p>Vous n'avez publié aucune annonce</p>`;
+        html += `<p class="text-gray-600 italic col-span-2">Vous n'avez publié aucune annonce</p>`;
     } else {
         annonces.forEach(annonce => {
             const images = annonce.images || [];
-            html += `<li>${annonce.titre} - ${annonce.description} - ${annonce.prix} € 
-            <div class="images-container">
-                ${images.map(image => `
-                    <img src="/images/${image}" alt="Image de l'annonce ${annonce.titre}" style="max-width: 150px; margin-right: 10px;">
-                `).join('')}
-            </div>
-                        <a href="/modifier-annonce/${annonce.id}"><button>Modifier</button></a>
-                        <form method="POST" action="/supprimer-annonce-user/${annonce.id}" style="display:inline;">
-                            <button type="submit">Supprimer</button>
+            html += `
+                <div class="bg-white shadow-md rounded-lg p-6">
+                    <h3 class="text-lg font-semibold mb-2">${annonce.titre}</h3>
+                    <p class="text-gray-700 mb-4">${annonce.description}</p>
+                    <p class="text-gray-900 font-bold mb-4">${annonce.prix} €</p>
+                    <div class="images-container flex space-x-4 mb-4">
+                        ${images.map(image => `
+                            <img src="/images/${image}" alt="Image de l'annonce ${annonce.titre}" class="max-w-[150px] rounded-lg shadow">
+                        `).join('')}
+                    </div>
+                    <div class="flex space-x-4">
+                        <a href="/modifier-annonce/${annonce.id}" class="bg-blue-500 text-white py-2 px-4 rounded hover:bg-blue-600">Modifier</a>
+                        <form method="POST" action="/supprimer-annonce-user/${annonce.id}" class="inline">
+                            <button type="submit" class="bg-red-500 text-white py-2 px-4 rounded hover:bg-red-600">Supprimer</button>
                         </form>
-                    </li>`;
+                    </div>
+                </div>`;
         });
     }
 
-    html += `</ul>
-             <br>
-             <h2>Vos annonces en cours de validation</h2>
-             <ul>`;
+    html += `
+            </div>
+            <h2 class="text-2xl font-bold mt-12 mb-6">Vos annonces en cours de validation</h2>
+            <div class="grid grid-cols-1 sm:grid-cols-2 gap-6">`;
 
     if (annoncesVal.length === 0) {
-        html += `<p>Vous n'avez aucune annonce en cours de validation</p>`;
+        html += `<p class="text-gray-600 italic col-span-2">Vous n'avez aucune annonce en cours de validation</p>`;
     } else {
         annoncesVal.forEach(annonceVal => {
             const imagesval = annonceVal.images || [];
-            html += `<li>${annonceVal.titre} - ${annonceVal.description} - ${annonceVal.prix} € ;
-            <div class="images-container">
-                ${imagesval.map(imageval => `
-                    <img src="/images/${imageval}" alt="Image de l'annonce ${annonceVal.titre}" style="max-width: 150px; margin-right: 10px;">
-                `).join('')}
-            </div>
-            </li>`
+            html += `
+                <div class="bg-white shadow-md rounded-lg p-6">
+                    <h3 class="text-lg font-semibold mb-2">${annonceVal.titre}</h3>
+                    <p class="text-gray-700 mb-4">${annonceVal.description}</p>
+                    <p class="text-gray-900 font-bold mb-4">${annonceVal.prix} €</p>
+                    <div class="images-container flex space-x-4">
+                        ${imagesval.map(imageval => `
+                            <img src="/images/${imageval}" alt="Image de l'annonce ${annonceVal.titre}" class="max-w-[150px] rounded-lg shadow">
+                        `).join('')}
+                    </div>
+                </div>`;
         });
     }
 
-    html += `</ul>
-     
-            ${footerView()}`;
+    html += `
+            </div>
+        </div>
+    </div>
+    ${footerView()}
+    `;
     return html;
 }
+
+
 
 
 module.exports = depAnnView;

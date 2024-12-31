@@ -1,5 +1,4 @@
 const db = require ('../db/db');
-const deleteView = require ('../views/deleteView');
 const adminView = require('../views/adminView');
 const adminUserView =require('../views/adminUserView');
 const adminAnnonceView = require('../views/adminAnnonceView');
