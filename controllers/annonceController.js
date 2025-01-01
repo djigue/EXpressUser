@@ -209,15 +209,14 @@ function showDepAnn(req, res) {
     });
 }
 
- function traitDepot (req, res) {
-    const {titre, description, prix, categorie, imagesUser} = req.body;
+function traitDepot(req, res) {
+    const { titre, description, prix, categorie, imagesUser } = req.body;
     const user_id = req.cookies.id;
 
     if (!titre || !description || !prix || !categorie) {
-        console.log('Champs manquants');
         req.session.flash = { error: "Tous les champs du formulaire sont obligatoires." };
         return res.redirect('/depot/formulaire');
-    }  
+    }
 
     if (!user_id) {
         req.session.flash = { error: "Vous devez être connecté pour ajouter une annonce." };
@@ -228,59 +227,72 @@ function showDepAnn(req, res) {
       INSERT INTO annoncesval (titre, description, prix, categorie, user_id)
       VALUES (?, ?, ?, ?, ?)
     `;
-  
+
     db.run(queryAnnonces, [titre, description, prix, categorie, user_id], function (err) {
-      if (err) {
-        console.error("Erreur lors de l'ajout de l'annonce :", err.message);
-        req.session.flash = { error: "Erreur lors de l'ajout de l'annonce." };
-        return res.redirect('/depot/formulaire');
-      }
-      const annoncevalId = this.lastID;
+        if (err) {
+            console.error("Erreur lors de l'ajout de l'annonce :", err.message);
+            req.session.flash = { error: "Erreur lors de l'ajout de l'annonce." };
+            return res.redirect('/depot/formulaire');
+        }
 
-      const images = [];
-      if (req.files) {
-          req.files.forEach(file => {
-              images.push(file.filename);
-          });
-      }
+        const annoncevalId = this.lastID;
+        const images = new Set(); // Utilisez un Set pour éviter les doublons
 
-      if (imagesUser) {
-          images.push(imagesUser);
-      }
-
-      if (images.length > 3){
-        req.session.flash = { error: "Vous ne pouvez mettre que 3 images dans votre annonces." };
-        return res.redirect('/depot/formulaire');
-      }
-
-      if (images.length > 0) {
-          const queryImages = 'INSERT INTO images (url) VALUES (?)';
-          const queryImagesAnnVal = `INSERT INTO images_annoncesval (image_id, annonceval_id) VALUES (?, ?)`;
-          
-          images.forEach((imageUrl) => {
-            db.run(queryImages, [imageUrl], function (err) {
-                if (err) {
-                    console.error("Erreur lors de l'ajout de l'image :", err.message);
-                    req.session.flash = { error: "Erreur lors de l'ajout de l'image." };
-                     return res.redirect('/depot/formulaire');
+        // Ajoutez les fichiers téléchargés
+        if (req.files) {
+            req.files.forEach(file => {
+                if (isValidImage(file.filename)) { // Vérifiez si le fichier est valide
+                    images.add(file.filename);
                 }
+            });
+        }
 
-                const imageId = this.lastID;
-                db.run(queryImagesAnnVal, [imageId, annoncevalId], function (err) {
+        // Ajoutez les images fournies par l'utilisateur (si valide)
+        if (imagesUser && isValidImage(imagesUser)) {
+            images.add(imagesUser);
+        }
+
+        // Limitez le nombre d'images à 3
+        if (images.size > 3) {
+            req.session.flash = { error: "Vous ne pouvez mettre que 3 images dans votre annonce." };
+            return res.redirect('/depot/formulaire');
+        }
+
+        if (images.size > 0) {
+            const queryImages = 'INSERT INTO images (url) VALUES (?)';
+            const queryImagesAnnVal = `
+                INSERT INTO images_annoncesval (image_id, annonceval_id) VALUES (?, ?)
+            `;
+
+            Array.from(images).forEach((imageUrl) => {
+                db.run(queryImages, [imageUrl], function (err) {
                     if (err) {
-                        console.error("Erreur lors de l'association de l'image à l'annonce :", err.message);
-                        req.session.flash = { error: "Erreur lors de l'association de l'image à l'annonce." };
+                        console.error("Erreur lors de l'ajout de l'image :", err.message);
+                        req.session.flash = { error: "Erreur lors de l'ajout de l'image." };
                         return res.redirect('/depot/formulaire');
                     }
+
+                    const imageId = this.lastID;
+                    db.run(queryImagesAnnVal, [imageId, annoncevalId], function (err) {
+                        if (err) {
+                            console.error("Erreur lors de l'association de l'image à l'annonce :", err.message);
+                            req.session.flash = { error: "Erreur lors de l'association de l'image à l'annonce." };
+                            return res.redirect('/depot/formulaire');
+                        }
+                    });
                 });
             });
-          });
-        };
+        }
 
-      req.session.flash = { success: "L'annonce a bien été enregistré, elle est en attente de validation." };
-      return res.redirect('/depot');
+        req.session.flash = { success: "L'annonce a bien été enregistrée, elle est en attente de validation." };
+        return res.redirect('/depot');
     });
- }
+}
+// Fonction pour valider les fichiers d'image
+function isValidImage(filename) {
+    const validExtensions = ['.jpg', '.jpeg', '.png', '.gif'];
+    return validExtensions.some(ext => filename.toLowerCase().endsWith(ext));
+}
 
  function traitSupp (req, res) {
     const annonce_id = req.params.id;
@@ -675,7 +687,7 @@ function showVehicule(req, res) {
                                 annonces.categorie, 
                                 annonces.prix
                             FROM annonces
-                            WHERE categorie = "véhicules"`;
+                            WHERE categorie = "vehicule"`;
 
     db.all(queryAnnonces, (err, rows) => {
         if (err) {
@@ -791,7 +803,7 @@ function showElec(req, res) {
                                 annonces.categorie, 
                                 annonces.prix
                             FROM annonces
-                            WHERE categorie = "electronique"`;
+                            WHERE categorie = "elec"`;
 
     db.all(queryAnnonces, (err, rows) => {
         if (err) {
