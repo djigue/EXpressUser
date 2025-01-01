@@ -49,11 +49,13 @@ function showAdminAnnonce(annoncesFinal, flash, role) {
           </div>`;
     } else {
         html += `
-          <form method="post" action="/supprimer-annonce" class="bg-white shadow-lg rounded-lg p-6 mb-6 w-1/4">
+         <section class="bg-white shadow-lg rounded-lg p-6 mb-8 w-full sm:w-1/2 md:w-1/3 lg:w-1/4 mx-auto">
+          <form method="post" action="/supprimer-annonce" class="flex flex-col items-center">
             <label for="id" class="block text-lg font-medium mb-2">ID annonce :</label>
             <input type="text" id="id" name="id" class="border border-gray-300 p-2 rounded w-1/2 mb-4" required>
             <button type="submit" class="bg-red-500 text-white px-4 py-2 rounded hover:bg-red-600">Supprimer</button>
           </form>
+         </section>
           ${generateList(annoncesFinal, '/supprimer-annonce', 'Supprimer')}
         `;
     }

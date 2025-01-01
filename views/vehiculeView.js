@@ -13,8 +13,11 @@ function vehiculeView(annonces, flash = {}, role) {
             </script>
             <script src="/scripts/notif.js"></script>
             <div class="container mx-auto">
-                <h1 class="text-3xl font-bold text-center mb-8">Annonces Immobilier</h1>
-                <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
+              <div class= "flex flex-col items-center mb-4">
+                <h1 class="text-3xl font-bold text-center mb-8">Annonces Véhicules</h1>
+                <a href="/annonce"  class="bg-gray-300 text-gray-700 px-4 py-2 rounded-md hover:bg-gray-400">Retour </a>
+              </div>
+              <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
     `;
 
     annonces.forEach(annonce => {

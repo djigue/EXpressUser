@@ -13,7 +13,10 @@ function autresView(annonces, flash = {}, role) {
             </script>
             <script src="/scripts/notif.js"></script>
             <div class="container mx-auto">
-                <h1 class="text-3xl font-bold text-center mb-8">Annonces Immobilier</h1>
+            <div class= "flex flex-col items-center mb-4">
+                <h1 class="text-3xl font-bold text-center mb-8">Annonces Autres</h1>
+                <a href="/annonce"  class="bg-gray-300 text-gray-700 px-4 py-2 rounded-md hover:bg-gray-400">Retour </a>
+            </div>
                 <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
     `;
 
@@ -22,8 +25,8 @@ function autresView(annonces, flash = {}, role) {
         html += `
             <div class="bg-white shadow-lg rounded-lg overflow-hidden">
                 <div class="p-4">
-                    <h2 class="text-xl font-bold text-gray-800">${titre || 'Titre indisponible'}</h2>
-                    <h3 class="text-sm text-gray-500">Catégorie: ${categorie || 'Non spécifiée'}</h3>
+                    <h2 class="text-xl font-bold text-gray-800">${titre}</h2>
+                    <h3 class="text-sm text-gray-500">Catégorie: ${categorie}</h3>
                 </div>
                 <div class="w-full h-48 bg-gray-100 flex items-center justify-center">
                     ${images.length > 0 

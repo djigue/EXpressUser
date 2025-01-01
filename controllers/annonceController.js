@@ -106,7 +106,8 @@ function showDepAnn(req, res) {
         SELECT 
                    annoncesval.id AS annonceval_id, 
                    annoncesval.titre, 
-                   annoncesval.description, 
+                   annoncesval.description,
+                   annoncesval.categorie, 
                    annoncesval.prix,
                    images.url AS image_url
                    FROM 
@@ -125,6 +126,7 @@ function showDepAnn(req, res) {
                     annonces.id AS annonce_id, 
                     annonces.titre, 
                     annonces.description, 
+                    annonces.categorie,
                     annonces.prix,
                     images.url AS image_url
                    FROM 
@@ -149,13 +151,14 @@ function showDepAnn(req, res) {
         }
 
         const groupedAnnonces = annonces.reduce((acc, row) => {
-            const { annonce_id, titre, description, prix, image_url } = row;
+            const { annonce_id, titre, description,categorie, prix, image_url } = row;
     
             if (!acc[annonce_id]) {
                 acc[annonce_id] = {
                     id: annonce_id,
                     titre,
                     description,
+                    categorie,
                     prix,
                     images: []
                 };
@@ -177,13 +180,14 @@ function showDepAnn(req, res) {
             return res.redirect('/depot');
         }
         const groupedAnnoncesval = annoncesval.reduce((acc, row) => {
-            const { annonceval_id, titre, description, prix, image_url } = row;
+            const { annonceval_id, titre, description, categorie, prix, image_url } = row;
     
             if (!acc[annonceval_id]) {
                 acc[annonceval_id] = {
                     id: annonceval_id,
                     titre,
                     description,
+                    categorie,
                     prix,
                     images: []
                 };
@@ -729,7 +733,7 @@ function showMaison(req, res) {
                                 annonces.categorie, 
                                 annonces.prix
                             FROM annonces
-                            WHERE categorie = "maison et jardin"`;
+                            WHERE categorie = "maison"`;
 
     db.all(queryAnnonces, (err, rows) => {
         if (err) {

@@ -10,30 +10,79 @@ const bcrypt = require('bcrypt');
 
 
 function getUser(req, res) {
-   
-    const name = req.cookies.name;
-    const user_id = req.cookies.id;
-    const role =req.cookies.role;
-    const query = `SELECT * FROM users WHERE id = ? AND username = ?`;
-    
-        db.get(query, [user_id, name], (err, user) => {
-            if (err) {
-                console.error("Erreur lors de la récupération de l'utilisateur :", err.message);
-                req.session.flash = { error: "Erreur lors de la récupération de l'utilisateur." };
-                return res.redirect('/login')
+    const { name, id: user_id, role } = req.cookies;
+
+    if (!user_id || !name) {
+        req.session.flash = { error: "Vous devez être connecté pour accéder à cette page." };
+        return res.redirect('/login');
+    }
+
+    const userQuery = `SELECT * FROM users WHERE id = ? AND username = ?`;
+    const annoncesQuery = `SELECT 
+                        annonces.id AS annonce_id, 
+                        annonces.titre, 
+                        annonces.description, 
+                        annonces.categorie,
+                        annonces.prix,
+                        (SELECT images.url 
+                         FROM images 
+                         INNER JOIN images_annonces ON images.id = images_annonces.image_id 
+                         WHERE images_annonces.annonce_id = annonces.id 
+                         LIMIT 1) AS image_url
+                    FROM 
+                        annonces
+                    ORDER BY 
+                        annonces.id;`
+
+    db.get(userQuery, [user_id, name], (err, user) => {
+        if (err) {
+            console.error("Erreur lors de la récupération de l'utilisateur :", err.message);
+            req.session.flash = { error: "Erreur interne du serveur." };
+            return res.redirect('/login');
+        }
+
+        if (!user) {
+            req.session.flash = { error: "Utilisateur non trouvé." };
+            return res.redirect('/login');
+        }
+
+        db.all(annoncesQuery, (errAnnonces, annonces) => {
+            if (errAnnonces) {
+                console.error("Erreur lors de la récupération des annonces :", errAnnonces.message);
+                req.session.flash = { error: "Erreur interne du serveur." };
+                return res.redirect('/depot');
             }
 
-            if (!user_id) {
-                req.session.flash = { error: "Vous devez être connecté pour ajouter une annonce." };
-                return res.redirect('/login');
-            }else {
-                res.setHeader('Content-Type', 'text/html');
-                const flash = res.locals.flash || {};
-                return res.send(userView(user, flash, role));
-            }
+            const groupedAnnonces = annonces.reduce((acc, row) => {
+                const { annonce_id, titre, description, categorie, prix, image_url } = row;
 
+                if (!acc[annonce_id]) {
+                    acc[annonce_id] = {
+                        id: annonce_id,
+                        titre,
+                        description,
+                        categorie,
+                        prix,
+                        images: []
+                    };
+                }
+
+                if (image_url) {
+                    acc[annonce_id].images.push(image_url);
+                }
+
+                return acc;
+            }, {});
+
+            const annoncesArray = Object.values(groupedAnnonces);
+         
+            res.setHeader('Content-Type', 'text/html');
+            const flash = res.locals.flash || {};
+            return res.send(userView(user, annoncesArray, flash, role));
         });
+    });
 }
+
          
 function showRegister (req,res) {
     const role =req.cookies.role;
@@ -146,22 +195,55 @@ function traitLogin(req, res) {
 
 function showHome(req, res) {
     const role = req.cookies.role;
-    const query = `SELECT * FROM annonces;`;
+    const annoncesQuery = `SELECT 
+                        annonces.id AS annonce_id, 
+                        annonces.titre, 
+                        annonces.description, 
+                        annonces.categorie,
+                        annonces.prix,
+                        (SELECT images.url 
+                         FROM images 
+                         INNER JOIN images_annonces ON images.id = images_annonces.image_id 
+                         WHERE images_annonces.annonce_id = annonces.id 
+                         LIMIT 1) AS image_url
+                    FROM 
+                        annonces
+                    ORDER BY 
+                        annonces.id;`
+db.all(annoncesQuery, (errAnnonces, annonces) => {
+    if (errAnnonces) {
+        console.error("Erreur lors de la récupération des annonces :", errAnnonces.message);
+        req.session.flash = { error: "Erreur interne du serveur." };
+        return res.redirect('/depot');
+    }
 
-    db.all(query, (err, rows) => {
-        if (err) {
-            console.error('Erreur lors de la récupération des annonces:', err.message);
-            return res.status(500).send('Erreur interne du serveur');
+    const groupedAnnonces = annonces.reduce((acc, row) => {
+        const { annonce_id, titre, description, categorie, prix, image_url } = row;
+
+        if (!acc[annonce_id]) {
+            acc[annonce_id] = {
+                id: annonce_id,
+                titre,
+                description,
+                categorie,
+                prix,
+                images: []
+            };
         }
 
-        if (!rows || rows.length === 0) {
-            return res.send('<html><body><h1>Aucun produit trouvé.</h1></body></html>');
+        if (image_url) {
+            acc[annonce_id].images.push(image_url);
         }
 
-        const flash = res.locals.flash || {};
-        const htmlContent = homeView(rows, flash, role);
-        res.send(htmlContent);
-    });
+        return acc;
+    }, {});
+
+    const annoncesArray = Object.values(groupedAnnonces);
+
+    res.setHeader('Content-Type', 'text/html');
+    const flash = res.locals.flash || {};
+    return res.send(homeView(annoncesArray, flash, role));
+});
 }
 
 

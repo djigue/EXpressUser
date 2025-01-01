@@ -4,19 +4,25 @@ const jwt = require('jsonwebtoken');
 const secretKey = 'bon';
 const bcrypt = require('bcrypt');
 
-function showPanier (req,res) {
-    console.log("Panier avant affichage:", req.session.panier);
-    const user_id = req.cookies.id; 
-    const role =req.cookies.role;
+function showPanier(req, res) {
+    const user_id = req.cookies.id;
+    const role = req.cookies.role;
 
     if (!user_id) {
         req.session.flash = { error: "Vous devez être connecté pour accéder à votre panier." };
-        return res.redirect('/login')
+        return res.redirect('/login');
     }
-    const query = `SELECT a.id, a.titre, a.prix, a.description, p.quantite
-                   FROM panier p
-                   JOIN annonces a ON p.annonces_id = a.id
-                   WHERE p.user_id = ?; `
+
+    const query = `
+        SELECT 
+            a.id AS annonce_id, a.titre, a.prix, a.description, a.categorie, p.quantite, 
+            i.url AS image_url
+        FROM panier p
+        JOIN annonces a ON p.annonces_id = a.id
+        LEFT JOIN images_annonces ia ON ia.annonce_id = a.id
+        LEFT JOIN images i ON ia.image_id = i.id
+        WHERE p.user_id = ?;
+    `;
 
     const totalQuery = `
         SELECT SUM(p.prix * c.quantite) AS total_panier
@@ -29,26 +35,43 @@ function showPanier (req,res) {
         if (err) {
             console.error('Erreur lors de la récupération du panier:', err.message);
             req.session.flash = { error: "Erreur lors de la récupération du panier." };
-            return res.redirect('/annonce')
+            return res.redirect('/annonce');
         }
+        console.log("Données récupérées pour le panier :", rows);
 
-            db.get(totalQuery, [user_id], (err, totalRow) => {
-                if (err) {
-                    console.error("Erreur lors du calcul du total :", err.message);
-                    req.session.flash = { error: "Erreur lors du clalcul du total." };
-                    return res.redirect('/panier')
-                }
+        // Organiser les annonces et leurs images
+        const annonces = rows.reduce((acc, row) => {
+            const annonceId = row.annonce_id;
+            if (!acc[annonceId]) {
+                acc[annonceId] = {
+                    id: annonceId,
+                    titre: row.titre,
+                    prix: row.prix,
+                    description: row.description,
+                    categorie: row.categorie,
+                    quantite: row.quantite,
+                    images: [],
+                };
+            }
+            if (row.image_url) {
+                acc[annonceId].images.push(row.image_url);
+            }
+            return acc;
+        }, {});
 
-            const totalPanier = totalRow?.total_panier || 0;
-    
-        // if (!rows || rows.length === 0) {    
-        //     req.session.flash = { error: "Vous n'avez aucune annonce dans votre panier" };
-        //     return res.redirect('/annonce')
-        // }
-        console.log("rows dans panierView:", rows);
+        db.get(totalQuery, [user_id], (err, totalRow) => {
+            if (err) {
+                console.error("Erreur lors du calcul du total :", err.message);
+                req.session.flash = { error: "Erreur lors du calcul du total." };
+                return res.redirect('/panier');
+            }
+
+
+        const annoncesArray = Object.values(annonces);
+        console.log("annArray control : ", annoncesArray);
+        const totalPanier = totalRow?.total_panier || 0;
         const flash = res.locals.flash || {};
-        const htmlContent = panierView(rows, totalPanier, flash, role);
-         return res.send(htmlContent);
+        return res.send(panierView(annoncesArray, totalPanier, flash, role) );
       });
     });
  }

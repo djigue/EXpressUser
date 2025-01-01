@@ -31,8 +31,8 @@ function annonceView(annonces, flash = {}, role) {
         html += `
             <div class="bg-white shadow-lg rounded-lg overflow-hidden">
                 <div class="p-4">
-                    <h2 class="text-sm text-gray-500">Catégorie : ${annonce.categorie}</h2>
                     <h3 class="text-xl font-bold text-gray-800">${annonce.titre}</h3>
+                    <h2 class="text-sm text-gray-500">Catégorie : ${annonce.categorie}</h2>
                 </div>
                 <div class="w-full h-48 bg-gray-100 flex items-center justify-center">
                     ${annonce.images.length > 0 

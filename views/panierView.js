@@ -1,7 +1,9 @@
 const headerView = require ('../views/headerView');
 const footerView = require ('../views/footerView');
 
-function panierView(rows, totalPanier, flash = {}, role) {
+function panierView(annoncesArray, totalPanier, flash = {}, role) {
+
+  console.log("annArray : ", annoncesArray);
     let html = `
       ${headerView(role)}
       <div id="notifications" style="position: fixed; top: 10px; right: 10px; z-index: 1000; max-width: 300px;"></div>
@@ -16,17 +18,27 @@ function panierView(rows, totalPanier, flash = {}, role) {
         <div class="container mx-auto px-4">
           <h1 class="text-3xl font-bold text-center mb-8">Votre Panier</h1>`;
   
-    if (rows.length > 0) {
+    if (annoncesArray.length > 0) {
       html += `
         <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
       `;
   
-      rows.forEach(annonce => {
+      annoncesArray.forEach(annonce => {
         const totalAnnonce = annonce.prix * annonce.quantite;
+        const imageUrl = annonce.images.length > 0 ? annonce.images[0] : null;
         html += `
           <div class="bg-white shadow-md rounded-lg p-6 flex flex-col justify-between">
             <div>
               <h2 class="text-lg font-semibold mb-2">${annonce.titre}</h2>
+              <h2 class="text-sm text-gray-500">Catégorie : ${annonce.categorie}</h2>
+            </div>
+            <div class="w-full h-48 bg-gray-100 flex items-center justify-center">
+              ${annonce.images.length > 0 
+                  ? `<img src="/images/${annonce.images[0]}" alt="Image de l'annonce ${annonce.titre}" class="object-cover h-full w-full">`
+                  : '<p class="text-gray-500">Aucune image disponible</p>'
+                }
+            </div>
+            <div>
               <p class="text-gray-700 mb-2">Prix : ${annonce.prix} €</p>
               <p class="text-gray-700 mb-4">Quantité : ${annonce.quantite}</p>
               <p class="text-gray-900 font-bold">Total : ${totalAnnonce} €</p>

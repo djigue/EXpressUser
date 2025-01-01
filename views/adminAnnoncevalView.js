@@ -7,8 +7,8 @@ function generateList(items, actionPath, buttonText) {
         ${items.map(item => `
             <div class="bg-white shadow-lg rounded-lg p-6">
                 <h3 class="text-xl font-semibold mb-2">${item.titre}</h3>
-                <p class="text-gray-700 mb-4">${item.description}</p>
                 <p class="text-gray-600 mb-4">Catégorie : ${item.categorie}</p>
+                <p class="text-gray-700 mb-4">${item.description}</p>
                 <div class="flex flex-wrap gap-2 mb-4">
                     ${item.images && item.images.length > 0 
                         ? item.images.map(image => `
