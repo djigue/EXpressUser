@@ -1,17 +1,24 @@
-const headerView = require ('../views/headerView');
-const footerView = require ('../views/footerView');
+const headerView = require('../views/headerView');
+const footerView = require('../views/footerView');
 
+/**
+ * @function
+ * @brief Génère la page de dépôt d'une annonce avec un formulaire.
+ * @param {Object} flash Messages flash facultatifs (succès ou erreur).
+ * @param {string} role Le rôle de l'utilisateur, utilisé pour afficher l'en-tête approprié.
+ * @returns {string} Retourne une chaîne HTML représentant la page de dépôt d'une annonce.
+ */
 function depotView(flash = {}, role) {
     let html = `
-        ${headerView(role)}
-        <div id="notifications" style="position: fixed; top: 10px; right: 10px; z-index: 1000; max-width: 300px;"></div>
+        ${headerView(role)} <!-- En-tête de la page, avec le rôle de l'utilisateur -->
+        <div id="notifications" style="position: fixed; top: 10px; right: 10px; z-index: 1000; max-width: 300px;"></div> <!-- Notifications -->
         <script>
             const flash = {
                 success: "${flash.success || ''}",
                 error: "${flash.error || ''}"
             };
         </script>
-        <script src="/scripts/notif.js"></script>
+        <script src="/scripts/notif.js"></script> <!-- Script pour afficher les notifications -->
         <div class="min-h-screen bg-zinc-200 py-10 flex justify-center items-center">
             <div class="bg-white shadow-md rounded-lg p-6 w-full max-w-3xl">
                 <h1 class="text-2xl font-bold mb-6">Déposer une annonce</h1>
@@ -94,13 +101,9 @@ function depotView(flash = {}, role) {
                 </form>
             </div>
         </div>
-        ${footerView()}`;
+        ${footerView()}`;  // Pied de page de la page
 
-    return html;
+    return html; // Retourne le HTML généré pour la page de dépôt d'une annonce
 }
 
-module.exports = depotView;
-
-
-
-module.exports = depotView;
+module.exports = depotView; // Exporte la fonction pour l'utiliser ailleurs dans l'application

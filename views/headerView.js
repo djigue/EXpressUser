@@ -1,3 +1,10 @@
+/**
+ * @function showHeader
+ * @brief Génère le code HTML pour afficher l'en-tête de la page, y compris le menu de navigation adapté selon le rôle de l'utilisateur et la page courante.
+ * @param {string} role - Le rôle de l'utilisateur (par exemple, 'user', 'admin', ou autre).
+ * @param {string} currentPage - Le nom de la page actuelle, utilisé pour appliquer une classe 'active' à l'élément de menu correspondant.
+ * @returns {string} Retourne une chaîne HTML représentant l'en-tête de la page, y compris la navigation principale et mobile.
+ */
 function showHeader(role, currentPage) {
   let html = `<!DOCTYPE html>
 <html lang="fr">
@@ -102,4 +109,4 @@ function showHeader(role, currentPage) {
   return html;
 }
 
-module.exports = showHeader;
+module.exports = showHeader; // Exporte la fonction pour l'utiliser ailleurs dans l'application

@@ -1,8 +1,16 @@
 const headerView = require('../views/headerView');
 const footerView = require('../views/footerView');
 
+/**
+ * @function
+ * @brief Génère la page d'administration pour gérer les utilisateurs, y compris la suppression d'un utilisateur et l'affichage de la liste des utilisateurs.
+ * @param {Array} users Liste des utilisateurs à afficher avec leurs informations (username et id).
+ * @param {Object} flash Objet contenant les messages de notification (succès ou erreur).
+ * @param {string} role Le rôle de l'utilisateur pour afficher l'en-tête approprié.
+ * @returns {string} Retourne une chaîne HTML représentant la page d'administration des utilisateurs.
+ */
 function showAdminUser(users, flash, role) {
-    let html = `${headerView(role)}
+    let html = `${headerView(role)} <!-- Affiche l'en-tête selon le rôle de l'utilisateur -->
                 <div id="notifications" style="position: fixed; top: 10px; right: 10px; z-index: 1000; max-width: 300px;"></div>
                 <script>
                   const flash = {
@@ -10,7 +18,7 @@ function showAdminUser(users, flash, role) {
                   error: "${flash.error || ''}"
                   };
                 </script>
-                <script src="/scripts/notif.js"></script>
+                <script src="/scripts/notif.js"></script> <!-- Script pour gérer les notifications -->
                 <div class="min-h-screen bg-zinc-200 py-10 flex justify-center">
                   <div class="container mx-auto px-4">
                     <h1 class="text-3xl font-bold text-center mb-8">Supprimer un utilisateur</h1>
@@ -24,8 +32,10 @@ function showAdminUser(users, flash, role) {
                     <section>
                       <h2 class="text-2xl font-semibold mb-4 text-center">Liste des utilisateurs :</h2>
                       <div class="space-y-4">
+                        <!-- Si la liste des utilisateurs est vide, affiche un message -->
                         ${users.length === 0 ? `<p class="text-center text-gray-700">Aucun utilisateur à afficher.</p>` : ''}
                         <div class="flex flex-wrap justify-center">
+                          <!-- Affiche chaque utilisateur avec un bouton de suppression -->
                           ${users.map(user => `
                             <div class="bg-white p-4 shadow-md rounded-lg flex items-center w-full sm:w-1/2 md:w-1/3 lg:w-1/4 xl:w-1/5 mx-2 mb-4">
                               <div>
@@ -42,9 +52,10 @@ function showAdminUser(users, flash, role) {
                     </section>
                   </div>
                 </div>
-                ${footerView()}`;
+                ${footerView()}`; // Affiche le pied de page
 
-    return html;
+    return html; // Retourne le code HTML généré
 }
 
+// Exporte la fonction pour l'utiliser ailleurs dans l'application
 module.exports = showAdminUser;

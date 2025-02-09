@@ -1,17 +1,31 @@
+// Importation des vues d'entête et de pied de page
 const headerView = require('../views/headerView');
 const footerView = require('../views/footerView');
 
+/**
+ * Génère la vue pour les annonces immobilières.
+ * @param {Array} annoncesImages - Tableau contenant les informations des annonces (titre, catégorie, description, etc.).
+ * @param {Object} [flash={}] - Objet contenant les messages de notification (succès, erreur).
+ * @param {string} role - Rôle de l'utilisateur (admin, user, etc.), utilisé pour afficher certains éléments conditionnels.
+ * @returns {string} HTML généré pour la vue des annonces immobilières.
+ */
 function immoView(annoncesImages, flash = {}, role) {
+    // Initialisation du contenu HTML avec l'entête dynamique (basé sur le rôle de l'utilisateur)
     let html = `${headerView(role)}
         <div class="bg-zinc-200 min-h-screen py-8">
+            <!-- Notification système -->
             <div id="notifications" class="fixed top-4 right-4 z-50 max-w-xs"></div>
             <script>
+                // Initialisation des messages flash pour les notifications
                 const flash = {
                     success: "${flash.success || ''}",
                     error: "${flash.error || ''}"
                 };
             </script>
+            <!-- Inclusion du script de gestion des notifications -->
             <script src="/scripts/notif.js"></script>
+
+            <!-- Contenu principal de la page -->
             <div class="container mx-auto">
                <div class= "flex flex-col items-center mb-4">
                 <h1 class="text-3xl font-bold text-center mb-8">Annonces Immobilier</h1>
@@ -20,9 +34,12 @@ function immoView(annoncesImages, flash = {}, role) {
                <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
     `;
 
+    // Boucle pour générer les cartes d'annonces immobilières
     annoncesImages.forEach(annonce => {
         const { annonce_id, titre, categorie, description, prix, images = [] } = annonce;
-        console.log("images immo : ",images)
+        console.log("images immo : ", images);
+        
+        // Ajout du HTML pour chaque annonce
         html += `
             <div class="bg-white shadow-lg rounded-lg overflow-hidden">
                 <div class="p-4">
@@ -39,7 +56,10 @@ function immoView(annoncesImages, flash = {}, role) {
                     <p class="text-gray-700">${description || 'Description indisponible'}</p>
                     <p class="text-lg font-semibold text-indigo-600 mt-2">${prix ? `${prix} €` : 'Prix non spécifié'}</p>
                     <div class="mt-4 flex justify-between items-center">
+                        <!-- Lien pour voir l'annonce -->
                         <a href="/annonce-voir/${annonce.annonce_id}?categorie=${encodeURIComponent(categorie || '')}" class="bg-indigo-500 text-white px-4 py-2 rounded hover:bg-indigo-600">Voir</a>
+                        
+                        <!-- Formulaire pour ajouter l'annonce au panier -->
                         <form id="panier-${annonce_id}" action="/panier" method="POST" class="flex items-center">
                             <input type="hidden" name="annonces_id" value="${annonce_id}">
                             <label for="quantite-${annonce_id}" class="text-gray-600 mr-2">Quantité :</label>
@@ -52,10 +72,12 @@ function immoView(annoncesImages, flash = {}, role) {
         `;
     });
 
+    // Si aucune annonce n'est trouvée, afficher un message
     if (annoncesImages.length === 0) {
         html += `<p class="text-center text-gray-600">Aucune annonce trouvée.</p>`;
     }
 
+    // Fermeture des balises HTML
     html += `
                 </div>
             </div>
@@ -63,7 +85,9 @@ function immoView(annoncesImages, flash = {}, role) {
         ${footerView()}
     `;
     
+    // Retourner le HTML généré pour la vue des annonces
     return html;
 }
 
+// Exportation de la fonction immoView
 module.exports = immoView;

@@ -1,6 +1,14 @@
 const headerView = require('../views/headerView');
 const footerView = require('../views/footerView');
 
+/**
+ * @function
+ * @brief Génère une liste d'annonces HTML.
+ * @param {Array} items Liste des annonces à afficher.
+ * @param {string} actionPath Chemin d'action pour la soumission du formulaire (par exemple, validation d'annonce).
+ * @param {string} buttonText Texte du bouton à afficher dans le formulaire.
+ * @returns {string} Retourne un code HTML pour afficher la liste d'annonces.
+ */
 function generateList(items, actionPath, buttonText) {
     return `
         <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
@@ -27,6 +35,14 @@ function generateList(items, actionPath, buttonText) {
         </div>`;
 }
 
+/**
+ * @function
+ * @brief Affiche la vue pour l'administration des annonces à valider.
+ * @param {Array} annoncesvalFinal Liste des annonces à valider.
+ * @param {Object} flash Objet contenant les messages de notification (succès ou erreur).
+ * @param {string} role Rôle de l'utilisateur (utilisé pour afficher l'en-tête).
+ * @returns {string} Retourne le code HTML pour afficher la page des annonces à valider.
+ */
 function showAdminAnnonceval(annoncesvalFinal, flash, role) {
     let html = `${headerView(role)}
                <div id="notifications" style="position: fixed; top: 10px; right: 10px; z-index: 1000; max-width: 300px;"></div>
@@ -42,12 +58,14 @@ function showAdminAnnonceval(annoncesvalFinal, flash, role) {
                    <h1 class="text-3xl font-bold text-center mb-8">Valider une annonce</h1>
                    <section>`;
 
+    // Si aucune annonce à valider
     if (annoncesvalFinal.length === 0) {
         html += `
           <div class="bg-white shadow-md rounded-lg p-6 text-center">
             <p class="text-gray-700">Il n'y a aucune annonce à valider.</p>
           </div>`;
     } else {
+        // Affiche les annonces à valider
         html += `${generateList(annoncesvalFinal, '/valider-annonce', 'Valider')}`;
     }
 
@@ -60,4 +78,5 @@ function showAdminAnnonceval(annoncesvalFinal, flash, role) {
     return html;
 }
 
+// Exporte la fonction pour l'utiliser ailleurs dans l'application
 module.exports = showAdminAnnonceval;
